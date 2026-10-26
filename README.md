@@ -2,193 +2,147 @@
 
 # LiteLauncher
 
-A lightweight, console-style game launcher for Windows with an Xbox-dashboard look. First integration: your **Steam** library.
+Um launcher de jogos **leve** para Windows, com visual de console (inspirado no painel do Xbox) e feito para ser usado com **controle**, teclado ou mouse. Reúne seus jogos da **Steam** e da **Epic Games** em uma única tela.
 
-Inspired by [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMode), but deliberately small:
-no shell replacement, no background service, no Steam Web API key. It reads Steam's own files on disk and
-launches games through the Steam client.
+Foi pensado para ser pequeno: não substitui o shell do Windows, não instala serviço em segundo plano e lê os arquivos que a própria Steam e a Epic já guardam no disco. Os jogos são abertos pelo cliente de cada loja, então overlay, nuvem de saves e DRM continuam funcionando.
 
-## Features (v0.2)
+Inspirado em [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMode) e [Playnite](https://github.com/JosefNemec/Playnite).
 
-**Xbox-style home screen**
-- Full-screen backdrop that cross-fades to the art of the game you have highlighted
-- Big tile for the last game you played, a row of recent games next to it
-- Bottom row: *My games & apps*, Steam, Settings and your account; text menu (Store, Community, Exit)
-- Profile, clock and battery (laptops/handhelds) in the top bar, controller button hints bottom-right
-- The whole layout is drawn on a 1280x720 canvas and scaled, so it looks the same at any window size
+## Capturas de tela
 
-**Live updates**
-- The featured game is always the one you played last, and it changes as you play: starting any Steam game
-  (from this launcher, from Steam itself or from a shortcut) puts it in the big tile within a couple of seconds
-- A file watcher on Steam's `steamapps` folders adds or removes games as they finish installing or are uninstalled
-- Coming back to the launcher after a game refreshes the order; tiles are moved, not rebuilt, so your focus stays put
-- The top bar shows "Playing <game>" while a game runs
+<p align="center"><img src="docs/screenshots/inicio.png" alt="Tela inicial" width="900"><br><sub>Tela inicial: fundo com a arte do jogo, jogos recentes, atalhos e barra superior</sub></p>
 
-**Launch overlay**
-- Picking a game shows a full-screen card with its cover and a 3-second countdown; `B`/`Esc` cancels
-- While the game runs the card stays behind it ("Playing now" + play time); when the game closes, LiteLauncher
-  comes back to the front on the Home screen automatically
+<p align="center"><img src="docs/screenshots/launchers.png" alt="Launchers" width="900"><br><sub>Launchers: Steam e Epic Games com a quantidade de jogos instalados</sub></p>
 
-**Game menu** (`Start` on a controller, the Menu key, or right-click a game)
-- Store info for the game: developer, release date, players online now, genres and description (Steam), plus your
-  playtime, last played and size on disk
-- **Achievements** (Steam): how many you have unlocked, with a progress bar. Uses your Steam Web API key when saved
-  (Settings -> Integrations), otherwise the public community stats page. Needs Steam sign-in and your Steam
-  "Game details" privacy set to Public. The **Achievements** button next to "More about the game" opens the full list
-  (icon, name, description, unlock date; unlocked first). Epic does not expose achievements to other apps, so it says so.
-- **Play**, **More about the game** (opens the game's page in Steam, or the Epic store) and **Manage**:
-  rename the game, pick your own cover or background, or restore the originals. Only LiteLauncher changes.
+## Instalação
 
-**SteamGridDB** (game menu → Manage → SteamGridDB…)
-- Browse community covers, backgrounds and logos for the game and apply one with `A`; a logo replaces the title in the game menu
-- Needs your free SteamGridDB API key (Settings → Integrations)
+1. Abra a página de [**Releases**](../../releases) do projeto.
+2. Baixe o `LiteLauncher-Setup.exe` (instalador) ou o `LiteLauncher-portable.zip` (sem instalar).
+3. Execute. O Windows pode mostrar o aviso "O Windows protegeu seu computador", pois o programa não tem assinatura digital paga. Clique em **Mais informações → Executar assim mesmo**.
 
-**Friends** (home tile, replaces the account tile)
-- Your Steam friends who are online, in-game first, with what they are playing; refreshes every minute
-- `A` on a friend opens a chat with them in the Steam client; "Open Steam chat" opens the Steam friends window
-- Needs Steam sign-in plus your free Steam Web API key (Settings → Integrations); your profile is still in Settings → Profile
+Os instaladores não exigem .NET instalado. Como gerar o instalador a partir do código: [docs/COMO-GERAR-O-EXE.pt-BR.md](docs/COMO-GERAR-O-EXE.pt-BR.md).
 
-**Epic Games Store**
-- Installed Epic games appear next to Steam ones (read from the Epic launcher's install manifests) and launch through the Epic launcher
-- Live tracking: installs/uninstalls show up automatically; starting an Epic game (from here or from Epic) is detected,
-  moves it to the big tile and records last played + playtime (kept in settings.json, Epic stores neither locally)
-- Home tile **Launchers** (replaces the Steam tile): pick Steam or the Epic Games Launcher to open it
+## Recursos
 
-**Top bar: network, volume and power**
-- Press **D-pad Up** from the top row of any screen to reach the top bar (Power is selected first); Left/Right moves between
-  the icons, `A` opens one, Down or `B` goes back to where you were
-- **Network** icon (Wi-Fi / Ethernet / offline): lists nearby Wi-Fi networks with signal; `A` joins a saved network, or asks for
-  the password (`A` opens the on-screen keyboard) for a new one (WPA2 or open networks). Also *Scan again*, *Disconnect Wi-Fi*
-  and a shortcut to the Windows network settings. Uses Windows' own `netsh wlan`; nothing is stored by LiteLauncher
-- **Volume** icon: system volume slider (Left/Right) and mute, same as in Settings
-- **Power** icon, or `Select` on the controller (`F9` on the keyboard): **Sleep**, **Restart**, **Shut down**.
-  Restart and shut down ask for confirmation first (Cancel is pre-selected); sleep runs straight away
+**Tela inicial estilo Xbox**
+- Fundo que muda para a arte do jogo selecionado. Em Configurações você escolhe entre mostrar a imagem inteira (padrão) ou preencher a tela
+- Cartão grande do último jogo jogado e fila dos jogos recentes
+- Atalhos: *My games & apps*, *Launchers*, *Settings* e *Friends*; menu de texto (Store, Community, Exit)
+- Menus de rede, volume e energia seguem o mesmo visual plano estilo Xbox One das demais telas
+- Perfil, relógio e bateria (notebooks e portáteis) na barra superior; dicas de botões do controle no rodapé
+- O jogo em destaque se atualiza sozinho quando você joga, instala ou desinstala algo
 
-**Library**
-- Reads installed games from **all** Steam library folders; covers from Steam's local cache
-- Search field for installed games: just start typing on this screen (or `Ctrl+F`)
-- With a controller: `Y` opens the search **and the Windows on-screen keyboard** (touch keyboard, or the classic
-  On-Screen Keyboard when the touch one can't be shown); `A` confirms and jumps to the results; `B` closes the
-  search and the keyboard and takes you back. On the profile name field, `A` opens/closes the keyboard
-- Launches via `steam://rungameid/<id>` (overlay, cloud saves and DRM keep working)
+**Biblioteca ("My games & apps")**
+- Lê os jogos instalados de **todas** as pastas de biblioteca da Steam e os jogos instalados da Epic
+- Abas **Installed / Recent / Steam / Epic Games / Favourites**: `LB` e `RB` no controle (`PageUp` e `PageDown` no teclado) trocam de aba. *Recent* mostra só o que você já jogou
+- **Ordenação**: `RT` no controle (ou `F2`, ou um clique no botão *Sort*) alterna entre Recentes, A–Z e Tamanho em disco; a escolha fica salva
+- **Favoritos**: `X` no controle (ou `F`) marca ou desmarca o jogo
+- **Capas automáticas**: se a Steam ainda não guardou a capa ou o fundo de um jogo, o LiteLauncher baixa a arte da loja da Steam e guarda em `%APPDATA%\LiteLauncher\covers` (a Epic não oferece arte pública; esses jogos continuam com a letra)
+- Busca: comece a digitar, `Ctrl+F` ou `Y` no controle (abre também o teclado virtual do Windows)
 
-**Settings** (Home -> Settings)
-- **Sound:** system volume and mute (Windows master volume), navigation sounds on/off + their volume
-- **Theme:** accent colour, background colour, show/hide game art, background darkness (applies live)
-- **Profile:** change the display name, pick one of 8 ready-made avatars, or a picture from your PC (square-cropped copy kept in `%APPDATA%\LiteLauncher`); Steam itself is not changed
-- **Steam account:** sign in with Steam, or reuse the account already signed in to the Steam client
-- **General:** start in fullscreen, rescan library
+**Tela de abertura do jogo (overlay)**
+- Cartão com a capa e contagem de 3 segundos; `B` ou `Esc` cancela
+- Durante o jogo ele vira a tela **Jogando agora**: tempo da sessão, botão **Back to game** (traz a janela do jogo para a frente) e o fechamento forçado. Quando você fecha o jogo, o LiteLauncher volta à frente na tela inicial
+- **Fechamento forçado**: botão *Force close game* (aperte duas vezes para confirmar). Encerra os processos da pasta do jogo e volta ao início, útil quando o jogo trava ou não abre. Com o jogo em tela cheia, segure **Select + Start** por 1,5 s para trazer o launcher de volta. Jogos com anti-cheat podem recusar o encerramento; nesse caso use o Gerenciador de Tarefas
 
-**Input:** keyboard, mouse and Xbox/XInput controller (D-pad/left stick, `A` select, `B` back, `Y` search, `Start` refresh).
-`F11` toggles fullscreen, `--fullscreen` starts that way.
+**Menu do jogo** (`Start` no controle, tecla Menu ou botão direito)
+- Informações da loja (desenvolvedor, lançamento, jogadores online, gêneros, descrição), tempo jogado, última vez e tamanho em disco
+- **Conquistas** (Steam): progresso com barra e lista completa (ícone, nome, descrição, data). Precisa estar logado na Steam, com "Detalhes do jogo" público. A Epic não oferece conquistas a outros programas
+- **Manage**: renomear, escolher capa/fundo próprios, ou restaurar os originais (só muda no LiteLauncher)
+- **SteamGridDB**: busca capas, fundos e logos da comunidade (precisa de uma chave gratuita)
 
-Settings are stored in `%APPDATA%\LiteLauncher\settings.json`.
+**Amigos (Steam)**
+- Amigos online, com os que estão jogando primeiro e o nome do jogo; `A` abre a conversa no cliente da Steam
+- Precisa de login na Steam e de uma chave da Steam Web API (gratuita)
 
-If something unexpected goes wrong the launcher keeps running and writes the details to
-`%APPDATA%\LiteLauncher\crash.log`; attach that file when reporting a bug.
+**Barra superior: rede, volume e energia**
+- `Seta para cima` no controle leva à barra superior
+- **Rede**: lista as redes Wi-Fi com sinal, conecta em redes salvas ou pede a senha com o teclado virtual. Usa o `netsh wlan` do Windows; o LiteLauncher não guarda senhas
+- **Volume**: volume geral do Windows e mudo
+- **Energia** (ou `Select` / `F9`): Suspender, Reiniciar e Desligar, com confirmação nos dois últimos
 
-## About "Sign in with Steam"
+**Launchers**
+- Mostra Steam e Epic com a quantidade de jogos instalados. Ao escolher, o cliente abre (Steam na biblioteca) e o LiteLauncher minimiza para ele aparecer
 
-It uses Steam's official OpenID 2.0 login:
+**Configurações**
+- **Som**: volume do sistema e sons de navegação
+- **Tema**: cor de destaque, cor de fundo, arte do jogo no fundo (mostrar imagem inteira ou preencher), escurecimento
+- **Perfil**: nome, avatar pronto ou foto do seu PC (a Steam não é alterada)
+- **Conta Steam**: login oficial pela Steam (OpenID) ou reutilizar a conta do cliente
+- **Geral**: iniciar em tela cheia, **iniciar junto com o Windows**, verificar atualizações e reler a biblioteca
 
-1. Your browser opens `steamcommunity.com`, where you sign in as usual (Steam Guard included).
-2. Steam redirects back to a one-shot listener on `127.0.0.1` inside LiteLauncher.
-3. LiteLauncher asks Steam to verify that response and only then saves your **public SteamID64**.
-4. Name and avatar come from your public community profile.
+**Atualizações**
+- Ao abrir (no máximo uma vez por dia) o LiteLauncher consulta a última versão publicada em Releases e avisa se houver uma nova; em Configurações → Geral o botão abre a página de download. Nada é baixado nem instalado sozinho. Funciona nas versões geradas pelo fluxo de Release do GitHub (o endereço do repositório e o número da versão entram no programa nessa hora); builds locais de desenvolvimento não consultam
 
-Your password and tokens are never seen or stored. Limitation: a **private** Steam profile exposes no name or
-picture; you still sign in, and the launcher shows a generic name. Sign-in identifies you but does not unlock
-anything that Steam's Web API would need a key for (e.g. not-installed games), see the roadmap.
+**Entradas:** teclado, mouse e controles. Controle Xbox (e qualquer um que a Steam Input mostre como Xbox) funciona direto. **PlayStation (DualShock 4 / DualSense), Switch Pro e controles DirectInput genéricos** também são lidos pelo Windows, sem programa extra: `X`/Cruz seleciona, Círculo volta, Triângulo busca, Quadrado favorita, `Options` abre o menu do jogo, `Share`/`Create` abre a energia e `L1`/`R1`/`R2` trocam abas e ordenação (a numeração dos botões desses controles foi montada pela documentação e ainda não foi testada em todos os modelos; se algum botão estiver trocado, abra uma issue com o modelo). Direcional ou analógico esquerdo movem; `Start` abre o menu do jogo ou atualiza. `F11` alterna tela cheia; `--fullscreen` inicia assim.
 
-## Requirements
+Configurações ficam em `%APPDATA%\LiteLauncher\settings.json`. Se algo der errado, o launcher continua aberto e registra os detalhes em `%APPDATA%\LiteLauncher\crash.log`; envie esse arquivo ao relatar um problema. Suas chaves de API ficam nessa pasta, nunca no projeto.
 
-- Windows 10/11
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) to build; .NET 8 Desktop Runtime to run
+## Sobre o "Entrar com a Steam"
 
-## Download
+Usa o login oficial da Steam (OpenID 2.0): o navegador abre `steamcommunity.com`, você entra normalmente (com Steam Guard), a Steam devolve a resposta a um ouvinte local temporário em `127.0.0.1`, o LiteLauncher pede à Steam para validá-la e só então guarda seu **SteamID64 público**. Senha e tokens nunca passam pelo programa. Perfis **privados** não expõem nome nem foto.
 
-Installers are attached to each [GitHub Release](../../releases) (`LiteLauncher-Setup.exe`, or the portable zip). They are built
-automatically by `.github/workflows/release.yml` when a version tag such as `v1.0.0` is pushed. Step by step (Portuguese):
-[docs/COMO-GERAR-O-EXE.pt-BR.md](docs/COMO-GERAR-O-EXE.pt-BR.md).
+## Compilar e gerar o instalador
 
-## Build the .exe and the installer
+Requisitos: Windows 10/11, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) e, para o instalador, [Inno Setup 6](https://jrsoftware.org/isinfo.php).
 
-On a Windows PC with the .NET 8 SDK (and, for the installer, [Inno Setup 6](https://jrsoftware.org/isinfo.php)):
+```powershell
+dotnet run --project src/LiteLauncher.App          # executar
+dotnet test                                         # testes
+powershell -ExecutionPolicy Bypass -File build\publish.ps1   # LiteLauncher.exe + instalador
+```
+
+O GitHub também gera o instalador sozinho: ao publicar uma tag como `v1.0.0`, o fluxo `.github/workflows/release.yml` compila, testa e anexa `LiteLauncher-Setup.exe` e o zip portátil à página de Releases. Passo a passo em [docs/COMO-GERAR-O-EXE.pt-BR.md](docs/COMO-GERAR-O-EXE.pt-BR.md).
+
+**Modo Xbox do Windows 11 (MSIX)**: no Windows 11 24H2 ou superior, o LiteLauncher pode ser escolhido como app inicial em *Configurações > Jogos > Modo Xbox* usando um pacote MSIX com o recurso `windows.gamingApp`. A Microsoft só assina essa capacidade para parceiros, por isso o caminho é o modo desenvolvedor, o mesmo usado por projetos da comunidade como [Playnite-FSE-Launcher](https://github.com/leeson865/Playnite-FSE-Launcher) e [AnyFSE](https://github.com/ashpynov/AnyFSE):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File build\publish.ps1
+powershell -ExecutionPolicy Bypass -File packaging\build-msix.ps1   # precisa do SDK do Windows 11
+powershell -ExecutionPolicy Bypass -File packaging\install-fse.ps1  # PowerShell como ADMINISTRADOR
 ```
 
-This runs the tests, writes a self-contained `publish\LiteLauncher.exe` (no .NET needed on the target PC) and, when Inno Setup
-is installed, `dist\LiteLauncher-Setup.exe`. The installer is per-user (no administrator prompt) and offers: desktop shortcut,
-start full screen at sign-in, and turning on Windows 11 **Xbox mode** (see below).
+`packaging\uninstall-fse.ps1` remove tudo. Não é um recurso oficial da Microsoft e uma atualização do Windows pode alterá-lo. A opção "Modo Xbox" do instalador comum é diferente: só liga a chave do Windows, com o app Xbox como tela inicial.
 
-**LiteLauncher as the Xbox mode home app (MSIX).** Windows 11 24H2+ has *Settings > Gaming > Xbox mode*. Making LiteLauncher the
-home app needs a package that declares the `windows.gamingApp` extension and the `Microsoft.appCategory.gamingHome` capability.
-Microsoft only signs that capability for partners, so this uses the same developer-mode route as the community projects
-([Playnite-FSE-Launcher](https://github.com/leeson865/Playnite-FSE-Launcher), [AnyFSE](https://github.com/ashpynov/AnyFSE)):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File build\publish.ps1            # 1. build the exe
-powershell -ExecutionPolicy Bypass -File packaging\build-msix.ps1     # 2. package + sign (needs the Windows 11 SDK)
-powershell -ExecutionPolicy Bypass -File packaging\install-fse.ps1    # 3. install, from an ADMINISTRATOR PowerShell
-```
-
-Then pick LiteLauncher under *Settings > Gaming > Xbox mode*. `packaging\uninstall-fse.ps1` removes everything. The packaged app always
-starts full screen and keeps using the normal `%APPDATA%\LiteLauncher` settings. Caveats: not Microsoft-supported; a Windows update can
-change it; the installer script turns Developer Mode on only while installing. The plain installer's "Xbox mode" option is different:
-it only turns Windows' switch on, with the Xbox app as home.
-
-## Build and run
-
-```powershell
-dotnet run --project src/LiteLauncher.App
-dotnet test
-dotnet publish src/LiteLauncher.App -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish
-```
-
-## Project layout
+## Estrutura do projeto
 
 ```
-src/LiteLauncher.Core            Portable library (also builds/tests on Linux/macOS)
-  Game.cs, IGameProvider.cs        Model and the interface every store implements
-  Settings/                        AppSettings + SettingsStore (atomic JSON file)
-  Steam/VdfParser.cs               Valve KeyValues (.vdf/.acf) parser
-  Steam/SteamLocator.cs            Finds the Steam install folder
-  Steam/SteamLibraryReader.cs      libraryfolders.vdf + appmanifest_*.acf -> games
-  Steam/SteamArtwork.cs            Cached covers and hero backgrounds
-  Steam/SteamAccount.cs            loginusers.vdf + public profile (name, avatar)
-  Steam/SteamOpenId.cs             "Sign in through Steam" (OpenID 2.0)
-  Steam/SteamProvider.cs           IGameProvider implementation, launches games
-src/LiteLauncher.App             WPF UI
-  Styles.xaml, App.xaml            Xbox-style control templates, theme tokens
-  MainWindow.xaml(.cs)             Home, library, navigation, backdrop, input
-  MainWindow.Settings.cs           Settings screen logic and Steam account UI
-  ThemeManager.cs                  Applies colours live (DynamicResource)
-  SoundEffects.cs, SystemVolume.cs Synthesised UI sounds; Windows master volume (Core Audio)
-  Gamepad.cs                       XInput polling
-tests/LiteLauncher.Core.Tests    xunit tests (parser, library, settings, account, OpenID)
+src/LiteLauncher.Core        Biblioteca portátil (compila e testa também em Linux/macOS)
+  Game.cs, IGameProvider.cs    Modelo e interface que cada loja implementa
+  Settings/                    Configurações (arquivo JSON gravado com segurança)
+  Steam/                       Leitor de .vdf/.acf, biblioteca, capas, conta, OpenID, amigos
+  Epic/                        Leitor dos manifestos da Epic
+  Achievements.cs              Conquistas (página da comunidade e Web API)
+  ProcessScope.cs              Regras de segurança do fechamento forçado
+src/LiteLauncher.App         Interface WPF
+  MainWindow.*.cs              Início, biblioteca, filtros, overlay, menu do jogo, amigos, energia...
+  GameProcessKiller.cs         Encerra os processos do jogo
+  Gamepad.cs                   Leitura do controle (XInput)
+tests/LiteLauncher.Core.Tests  Testes xunit
+build/, installer/, packaging/ Scripts do .exe, instalador Inno Setup e MSIX
 ```
 
-## Adding another store
-
-Implement `IGameProvider` in `LiteLauncher.Core` and add it to `_providers` in `MainWindow.xaml.cs`.
+Para adicionar outra loja, implemente `IGameProvider` em `LiteLauncher.Core` e registre em `_providers` (`MainWindow.xaml.cs`).
 
 ## Roadmap
 
-- [ ] Not-installed Steam games (needs a Steam Web API key or the public games list)
-- [ ] Cover download fallback when Steam hasn't cached an image yet
-- [ ] Epic Games, GOG, Xbox / Game Pass providers
-- [ ] Favourites, per-game details, on-screen keyboard for search
-- [ ] Start with Windows
+- [ ] Provedores GOG e Xbox / Game Pass
+- [ ] Jogos da Steam não instalados
+- [ ] Arte para jogos da Epic (via SteamGridDB)
+- [ ] Perfis de controle e remapeamento de botões
+- [ ] Instalar atualizações automaticamente (hoje o programa só avisa)
+- [ ] Assinatura de código do instalador
+- [x] Iniciar junto com o Windows
+- [x] Aviso de atualização
+- [x] Download de capas ausentes (Steam)
+- [x] Ordenação e aba Recentes
+- [x] Controles PlayStation, Switch e DirectInput
 
-## Notes
+## Avisos
 
-- Not affiliated with Valve, Microsoft or Xbox. Steam is a trademark of Valve Corporation. The layout is
-  inspired by console dashboards; no Xbox artwork or assets are included.
-- Games without art in Steam's cache show a letter placeholder.
+- Sem vínculo com Valve, Microsoft, Xbox ou Epic Games. Steam é marca da Valve Corporation. O visual é inspirado em painéis de console e não inclui arte ou recursos do Xbox.
+- Jogos sem imagem no cache da Steam mostram uma letra no lugar da capa.
 
-## Game overlay: force close and wallpaper
+## Licença
 
-- While a game is starting or running, the overlay has a **Force close game** button. Press it twice (A / Enter) to end every process that runs from the game's install folder and go back to Home. If the game is in front of the launcher, hold **Select + Start** on the controller for 1.5 s to bring the overlay back. Games protected by anti-cheat may refuse to be closed; use Task Manager then.
-- **Settings → Theme → Show the whole image** (on by default) shows wide game art uncropped, pinned to the top and fading into the background. Turn it off to fill the screen like before.
+Veja o arquivo [LICENSE](LICENSE).
