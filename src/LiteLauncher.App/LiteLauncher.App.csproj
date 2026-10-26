@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>LiteLauncher.App</RootNamespace>
+    <AssemblyName>LiteLauncher</AssemblyName>
+    <ApplicationIcon>Assets\LiteLauncher.ico</ApplicationIcon>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LiteLauncher.Core\LiteLauncher.Core.csproj" />
+  </ItemGroup>
+
+</Project>

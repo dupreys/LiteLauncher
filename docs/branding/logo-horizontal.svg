@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200" width="900" height="200" role="img" aria-label="LiteLauncher">
+  <g transform="translate(20,20) scale(0.625)">
+    <rect x="1.5" y="1.5" width="253" height="253" rx="56" fill="#14171D" stroke="#343B46" stroke-width="3"/>
+    <rect x="48" y="48" width="72" height="72" rx="14" fill="#2EA043"/>
+    <rect x="136" y="48" width="72" height="72" rx="14" fill="#3E444F"/>
+    <rect x="48" y="136" width="72" height="72" rx="14" fill="#3E444F"/>
+    <rect x="136" y="136" width="72" height="72" rx="14" fill="#3E444F"/>
+    <rect x="40" y="40" width="88" height="88" rx="20" fill="none" stroke="#F5F7FA" stroke-width="5"/>
+  </g>
+  <!-- Text uses Inter when installed, otherwise a similar system sans-serif. Use the PNG logos where fonts matter. -->
+  <text x="210" y="128" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="96">
+    <tspan font-weight="300" fill="#F5F7FA">Lite</tspan><tspan font-weight="700" fill="#2EA043">Launcher</tspan>
+  </text>
+</svg>
