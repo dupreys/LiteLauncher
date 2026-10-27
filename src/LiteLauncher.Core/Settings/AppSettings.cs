@@ -13,6 +13,9 @@ public sealed class AppSettings
     /// <summary>Show the whole game art (letterboxed, fading into the background) instead of cropping it to fill the screen.</summary>
     public bool FitBackdrop { get; set; } = true;
 
+    /// <summary>Game art covers the whole screen (like the Xbox home). When off, the "bottom fade" style above is used.</summary>
+    public bool FullBackdrop { get; set; } = true;
+
     /// <summary>How dark the game-art background is, 0 (none) to 0.9.</summary>
     public double BackdropDim { get; set; } = 0.35;
 
@@ -22,6 +25,9 @@ public sealed class AppSettings
 
     // General
     public bool StartFullscreen { get; set; }
+
+    /// <summary>Interface language code ("en", "pt-BR", "es"); null means follow the Windows language.</summary>
+    public string? Language { get; set; }
 
     /// <summary>Look for a newer GitHub release at startup (at most once a day).</summary>
     public bool CheckForUpdates { get; set; } = true;

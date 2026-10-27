@@ -265,7 +265,9 @@
     <!-- ===== Text boxes. The magnifier icon and the hint text are drawn by the page on top of the box. ===== -->
     <Style x:Key="SearchBox" TargetType="TextBox">
         <Setter Property="FontSize" Value="16"/>
-        <Setter Property="Padding" Value="40,9,12,9"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="TextAlignment" Value="Left"/>
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
         <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
@@ -273,8 +275,9 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="Frame" Background="{DynamicResource Surface}" BorderBrush="Transparent"
-                            BorderThickness="3" CornerRadius="3" Padding="{TemplateBinding Padding}">
-                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                            BorderThickness="3" CornerRadius="3" Padding="34,9,10,9">
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Margin="0" Padding="0"
+                                      HorizontalAlignment="Stretch"
                                       HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
                                       VerticalAlignment="Center"/>
                     </Border>

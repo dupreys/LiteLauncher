@@ -178,10 +178,10 @@ public static class Achievements
 
     public static string Describe(AchievementResult result) => result.Status switch
     {
-        AchievementStatus.Ok => string.Create(CultureInfo.CurrentCulture, $"{result.Unlocked} of {result.Total} unlocked"),
-        AchievementStatus.None => "This game has no achievements.",
-        AchievementStatus.NotSignedIn => "Sign in with Steam in Settings to see your achievements.",
-        AchievementStatus.NotSupported => "Epic does not share achievements with other apps.",
-        _ => "Not available. Set your Steam \"Game details\" privacy to Public.",
+        AchievementStatus.Ok => Loc.F("{0} of {1} unlocked", result.Unlocked, result.Total),
+        AchievementStatus.None => Loc.T("This game has no achievements."),
+        AchievementStatus.NotSignedIn => Loc.T("Sign in with Steam in Settings to see your achievements."),
+        AchievementStatus.NotSupported => Loc.T("Epic does not share achievements with other apps."),
+        _ => Loc.T("Not available. Set your Steam \"Game details\" privacy to Public."),
     };
 }

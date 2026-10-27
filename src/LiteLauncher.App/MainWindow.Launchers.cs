@@ -44,7 +44,7 @@ public partial class MainWindow
             if (item is not null)
             {
                 _nowPlaying = item.Name;
-                ShowToast($"Now playing {item.Name}");
+                ShowToast(Loc.F("Now playing {0}", item.Name));
             }
         }
         foreach (var (key, minutes) in stopped)
@@ -80,8 +80,8 @@ public partial class MainWindow
         var steamOk = _providers.Any(p => p.Name == SteamProvider.ProviderName && p.IsAvailable);
         var epicOk = _providers.Any(p => p.Name == EpicProvider.ProviderName && p.IsAvailable);
 
-        LauncherSteamSub.Text = steamOk ? $"{steamCount} games installed" : "Not found on this PC";
-        LauncherEpicSub.Text = epicOk ? $"{epicCount} games installed" : "Not found on this PC";
+        LauncherSteamSub.Text = steamOk ? Loc.F("{0} games installed", steamCount) : Loc.T("Not found on this PC");
+        LauncherEpicSub.Text = epicOk ? Loc.F("{0} games installed", epicCount) : Loc.T("Not found on this PC");
         LaunchersPanel.Visibility = Visibility.Visible;
         App.Sounds.Play(SoundKind.Select);
         Keyboard.Focus(LauncherSteamButton);
@@ -113,7 +113,7 @@ public partial class MainWindow
         {
             // Start the program itself (what the Start menu shortcut does): it opens on the Epic home page, or
             // brings the window forward when it is already running. The store link is only a fallback.
-            var exe = FindEpicLauncherExe();
+            var exe = EpicProvider.FindLauncherExe();
             var start = exe is not null
                 ? new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe)! }
                 : new ProcessStartInfo("com.epicgames.launcher://store") { UseShellExecute = true };
@@ -124,24 +124,6 @@ public partial class MainWindow
         {
             ShowToast("The Epic Games Launcher is not installed on this PC.");
         }
-    }
-
-    private static string? FindEpicLauncherExe()
-    {
-        foreach (var root in new[]
-                 {
-                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                 })
-        {
-            if (string.IsNullOrEmpty(root)) continue;
-            foreach (var bits in new[] { "Win64", "Win32" })
-            {
-                var path = Path.Combine(root, "Epic Games", "Launcher", "Portal", "Binaries", bits, "EpicGamesLauncher.exe");
-                if (File.Exists(path)) return path;
-            }
-        }
-        return null;
     }
 
     private void StepAsideForClient()

@@ -23,6 +23,8 @@ public partial class MainWindow
     private OverlayPhase _overlayPhase = OverlayPhase.None;
     private GameItem? _overlayItem;
     private DateTime _overlayPhaseStart;
+    private DateTime _launchBegan;
+    private static readonly TimeSpan KeepClientsMinimizedFor = TimeSpan.FromSeconds(90);
 
     private readonly DispatcherTimer _forceTimer = new() { Interval = TimeSpan.FromSeconds(4) };
     private bool _forceArmed;
@@ -30,11 +32,23 @@ public partial class MainWindow
     // Force close makes sense once the game was handed to the store: it may be frozen, or never have opened.
     private bool OverlayForceable => _overlayPhase is OverlayPhase.Starting or OverlayPhase.Playing;
 
+    // The overlay can be tucked away into a chip in the top bar (see MinimizeOverlay) while the game keeps running,
+    // so you can use the launcher (and later other apps) at the same time.
+    private bool _overlayMinimized;
+
+    private bool OverlayVisible => _overlayPhase != OverlayPhase.None && !_overlayMinimized;
+
+    private bool OverlayHomeable => _overlayPhase is OverlayPhase.Starting or OverlayPhase.Playing;
+
     private bool OverlayCancelable => _overlayPhase is OverlayPhase.Countdown or OverlayPhase.Starting;
 
     private void ShowLaunchOverlay(GameItem item)
     {
-        if (_overlayPhase != OverlayPhase.None) return;
+        if (_overlayPhase != OverlayPhase.None)
+        {
+            if (_overlayMinimized) RestoreOverlay(); // a game is already running: show it instead of starting another
+            return;
+        }
         VirtualKeyboard.Hide();
 
         _overlayItem = item;
@@ -79,28 +93,31 @@ public partial class MainWindow
         OverlayCancelButton.Visibility = OverlayCancelable ? Visibility.Visible : Visibility.Collapsed;
         OverlayForceButton.Visibility = OverlayForceable ? Visibility.Visible : Visibility.Collapsed;
         OverlayResumeButton.Visibility = phase == OverlayPhase.Playing ? Visibility.Visible : Visibility.Collapsed;
+        OverlayHomeButton.Visibility = OverlayHomeable ? Visibility.Visible : Visibility.Collapsed;
+        OverlayHomeLabel.Text = Loc.T(phase == OverlayPhase.Playing ? "B   ⌂  Home" : "⌂  Home");
         if (_overlayItem is { } shown)
-            OverlaySource.Text = (phase == OverlayPhase.Playing ? "NOW PLAYING" : "LITELAUNCHER") + $" · {shown.Game.Source.ToUpperInvariant()}";
+            OverlaySource.Text = (phase == OverlayPhase.Playing ? Loc.T("NOW PLAYING") : "LITELAUNCHER") + $" · {shown.Game.Source.ToUpperInvariant()}";
         DisarmForce();
         switch (phase)
         {
             case OverlayPhase.Countdown:
-                OverlayHint.Text = "You can still cancel the launch.";
-                OverlayCancelLabel.Text = "B   ✕  Cancel launch";
+                OverlayHint.Text = Loc.T("You can still cancel the launch.");
+                OverlayCancelLabel.Text = Loc.T("B   ✕  Cancel launch");
                 break;
             case OverlayPhase.Starting:
-                OverlayStatus.Text = "Starting game…";
-                OverlayHint.Text = "Waiting for the store to open the game.";
-                OverlayCancelLabel.Text = "B   ✕  Close";
+                _launchBegan = DateTime.UtcNow;
+                OverlayStatus.Text = Loc.T("Starting game…");
+                OverlayHint.Text = Loc.T("Waiting for the store to open the game.");
+                OverlayCancelLabel.Text = Loc.T("B   ✕  Close");
                 break;
             case OverlayPhase.Playing:
-                OverlayHint.Text = "Press A to go back to the game. LiteLauncher returns to Home when you close it. With the game in front, hold Select + Start on the controller to come back here.";
+                OverlayHint.Text = Loc.T("Press A to go back to the game, or B to go Home and keep it running. LiteLauncher returns to Home when you close the game. With the game in front, hold Select + Start on the controller to come back here.");
                 OverlayProgress.Width = OverlayBarWidth;
                 break;
         }
 
         // The Cancel button disappears in Playing; keep focus on a button that is still there.
-        if (phase == OverlayPhase.Playing && IsActive) Keyboard.Focus(OverlayResumeButton);
+        if (phase == OverlayPhase.Playing && IsActive && !_overlayMinimized) Keyboard.Focus(OverlayResumeButton);
     }
 
     private void OnOverlayTick()
@@ -110,7 +127,7 @@ public partial class MainWindow
         {
             case OverlayPhase.Countdown:
                 var left = Math.Max(0, CountdownSeconds - elapsed.TotalSeconds);
-                OverlayStatus.Text = $"Game starts in {Math.Ceiling(left):0} sec.";
+                OverlayStatus.Text = Loc.F("Game starts in {0} sec.", Math.Ceiling(left).ToString("0"));
                 OverlayProgress.Width = OverlayBarWidth * Math.Min(1, elapsed.TotalSeconds / CountdownSeconds);
                 if (left <= 0)
                 {
@@ -130,7 +147,7 @@ public partial class MainWindow
                 break;
 
             case OverlayPhase.Playing:
-                OverlayStatus.Text = $"Playing now · {elapsed:h\\:mm\\:ss}";
+                OverlayStatus.Text = Loc.F("Playing now · {0}", elapsed.ToString(@"h\:mm\:ss"));
                 break;
         }
     }
@@ -139,6 +156,11 @@ public partial class MainWindow
     private void UpdateLaunchOverlay(int runningAppId)
     {
         if (_overlayItem is null) return;
+
+        // Steam/Epic like to pop their own window up while a game starts; keep them minimized for the first stretch.
+        if (_overlayPhase is OverlayPhase.Starting or OverlayPhase.Playing && DateTime.UtcNow - _launchBegan < KeepClientsMinimizedFor)
+            StoreWindows.MinimizeClients();
+
         var isOurGame = IsGameRunning(_overlayItem.Game, runningAppId);
 
         if (_overlayPhase == OverlayPhase.Starting && isOurGame)
@@ -168,6 +190,8 @@ public partial class MainWindow
     {
         _overlayTimer.Stop();
         DisarmForce();
+        _overlayMinimized = false;
+        NowPlayingChip.Visibility = Visibility.Collapsed;
         _overlayPhase = OverlayPhase.None;
         _overlayItem = null;
 
@@ -181,7 +205,20 @@ public partial class MainWindow
         LaunchOverlay.BeginAnimation(OpacityProperty, fade);
 
         ShowView(AppView.Home, sound: false);
-        if (returnHome) BringLauncherToFront();
+        if (returnHome)
+        {
+            BringLauncherToFront();
+
+            // The store client sometimes grabs focus again a moment after the game exits (cloud sync, "game closed"
+            // windows): take it back once more so you always land on the LiteLauncher home screen.
+            var retake = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+            retake.Tick += (_, _) =>
+            {
+                retake.Stop();
+                if (_overlayPhase == OverlayPhase.None) BringLauncherToFront();
+            };
+            retake.Start();
+        }
 
         // Once everything has settled, make sure the keyboard/controller focus is back on the Home screen.
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
@@ -210,6 +247,48 @@ public partial class MainWindow
         ShowToast(wasCountdown ? "Launch cancelled" : "Overlay closed");
     }
 
+    /// <summary>Hides the overlay but keeps the game session: a chip in the top bar brings it back.</summary>
+    private void MinimizeOverlay()
+    {
+        if (!OverlayHomeable || _overlayMinimized || _overlayItem is not { } item) return;
+
+        _overlayMinimized = true;
+        App.Sounds.Play(SoundKind.Back);
+        NowPlayingText.Text = item.Name;
+        NowPlayingChip.Visibility = Visibility.Visible;
+
+        var fade = new DoubleAnimation(0, TimeSpan.FromMilliseconds(250));
+        fade.Completed += (_, _) =>
+        {
+            if (_overlayMinimized) LaunchOverlay.Visibility = Visibility.Collapsed;
+        };
+        LaunchOverlay.BeginAnimation(OpacityProperty, fade);
+
+        ShowView(AppView.Home, sound: false);
+        Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+        {
+            if (_overlayMinimized) FocusView(AppView.Home);
+        }));
+    }
+
+    private void RestoreOverlay()
+    {
+        if (!_overlayMinimized || _overlayItem is null) return;
+
+        _overlayMinimized = false;
+        NowPlayingChip.Visibility = Visibility.Collapsed;
+        App.Sounds.Play(SoundKind.Select);
+        VirtualKeyboard.Hide();
+
+        LaunchOverlay.Visibility = Visibility.Visible;
+        LaunchOverlay.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(250)));
+        Keyboard.Focus(_overlayPhase == OverlayPhase.Playing ? OverlayResumeButton : OverlayCancelButton);
+    }
+
+    private void OnOverlayHomeClick(object sender, RoutedEventArgs e) => MinimizeOverlay();
+
+    private void OnNowPlayingClick(object sender, RoutedEventArgs e) => RestoreOverlay();
+
     private void OnOverlayCancelClick(object sender, RoutedEventArgs e) => CancelLaunchOverlay();
 
     // ---- Force close: the first press asks, the second press (within 4 s) ends the game's processes ----
@@ -218,7 +297,7 @@ public partial class MainWindow
     {
         _forceTimer.Stop();
         _forceArmed = false;
-        OverlayForceLabel.Text = "A   ⏻  Force close game";
+        OverlayForceLabel.Text = Loc.T("A   ⏻  Force close game");
     }
 
     private async void OnOverlayForceClick(object sender, RoutedEventArgs e)
@@ -228,7 +307,7 @@ public partial class MainWindow
         if (!_forceArmed)
         {
             _forceArmed = true;
-            OverlayForceLabel.Text = "A   ⏻  Press again to confirm";
+            OverlayForceLabel.Text = Loc.T("A   ⏻  Press again to confirm");
             _forceTimer.Stop();
             _forceTimer.Start();
             App.Sounds.Play(SoundKind.Move);
@@ -237,7 +316,7 @@ public partial class MainWindow
 
         DisarmForce();
         OverlayForceButton.IsEnabled = false;
-        OverlayStatus.Text = "Closing the game…";
+        OverlayStatus.Text = Loc.T("Closing the game…");
 
         int ended;
         try
@@ -253,8 +332,8 @@ public partial class MainWindow
 
         CloseLaunchOverlay(returnHome: true);
         ShowToast(ended > 0
-            ? $"{item.Name} was closed."
-            : $"No running process of {item.Name} was found. If it is still open, close it from Task Manager.");
+            ? Loc.F("{0} was closed.", item.Name)
+            : Loc.F("No running process of {0} was found. If it is still open, close it from Task Manager.", item.Name));
     }
 
     /// <summary>Controller combo (hold Select + Start): works while the game is in front, to get back to this screen.</summary>
@@ -262,6 +341,11 @@ public partial class MainWindow
     {
         if (!OverlayForceable) return;
         BringLauncherToFront();
+        if (_overlayMinimized)
+        {
+            Keyboard.Focus(NowPlayingChip);
+            return;
+        }
         Keyboard.Focus(_overlayPhase == OverlayPhase.Playing ? OverlayResumeButton : OverlayForceButton);
     }
 
@@ -279,47 +363,53 @@ public partial class MainWindow
     /// <summary>While the overlay is up it owns the keyboard: Esc/Backspace/Enter cancel, everything else is ignored.</summary>
     private bool HandleOverlayKey(Key key)
     {
-        if (_overlayPhase == OverlayPhase.None) return false;
+        if (!OverlayVisible) return false;
         switch (key)
         {
             case Key.Escape or Key.Back:
-                CancelLaunchOverlay();
+                if (OverlayCancelable) CancelLaunchOverlay();
+                else MinimizeOverlay();
                 break;
             case Key.Enter or Key.Space:
                 ActivateFocused(); // presses whichever overlay button has focus
                 break;
-            case Key.Left or Key.Right or Key.Up or Key.Down:
-                Move(key switch
-                {
-                    Key.Left => FocusNavigationDirection.Left,
-                    Key.Right => FocusNavigationDirection.Right,
-                    Key.Up => FocusNavigationDirection.Up,
-                    _ => FocusNavigationDirection.Down,
-                });
+            case Key.Left or Key.Right:
+                MoveOverlayFocus(key == Key.Left ? -1 : 1);
                 break;
         }
         return key != Key.F11; // keep fullscreen toggle working
     }
 
+    /// <summary>
+    /// Left/Right inside the overlay: steps through the visible buttons in order. (Geometric focus search could jump to
+    /// the Home screen behind the overlay, which the focus trap then blocked, leaving the selection stuck.)
+    /// </summary>
+    private void MoveOverlayFocus(int step)
+    {
+        var buttons = new[] { OverlayCancelButton, OverlayResumeButton, OverlayHomeButton, OverlayForceButton }
+            .Where(b => b.Visibility == Visibility.Visible && b.IsEnabled)
+            .ToList();
+        if (buttons.Count == 0) return;
+
+        var index = buttons.FindIndex(b => b.IsKeyboardFocused);
+        var next = index < 0 ? 0 : Math.Clamp(index + step, 0, buttons.Count - 1);
+        if (next != index) Keyboard.Focus(buttons[next]);
+    }
+
     private bool HandleOverlayGamepad(GamepadButton button)
     {
-        if (_overlayPhase == OverlayPhase.None) return false;
+        if (!OverlayVisible) return false;
         switch (button)
         {
             case GamepadButton.A:
                 ActivateFocused();
                 break;
             case GamepadButton.B:
-                CancelLaunchOverlay();
+                if (OverlayCancelable) CancelLaunchOverlay();
+                else MinimizeOverlay();
                 break;
-            case GamepadButton.Left or GamepadButton.Right or GamepadButton.Up or GamepadButton.Down:
-                Move(button switch
-                {
-                    GamepadButton.Left => FocusNavigationDirection.Left,
-                    GamepadButton.Right => FocusNavigationDirection.Right,
-                    GamepadButton.Up => FocusNavigationDirection.Up,
-                    _ => FocusNavigationDirection.Down,
-                });
+            case GamepadButton.Left or GamepadButton.Right:
+                MoveOverlayFocus(button == GamepadButton.Left ? -1 : 1);
                 break;
         }
         return true;

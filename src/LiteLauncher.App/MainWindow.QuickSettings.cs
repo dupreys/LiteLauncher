@@ -45,14 +45,14 @@ public partial class MainWindow
     /// </summary>
     private bool TryFocusTopBar()
     {
-        if (ActiveModal() is not null || _overlayPhase != OverlayPhase.None) return false;
+        if (ActiveModal() is not null || OverlayVisible) return false;
         if (Keyboard.FocusedElement is not UIElement focused || InTopBar(focused)) return false;
 
         var above = focused.PredictFocus(FocusNavigationDirection.Up);
         if (above is not null && !InTopBar(above)) return false;
 
         VirtualKeyboard.Hide();
-        Keyboard.Focus(PowerButton);
+        Keyboard.Focus(NowPlayingChip.IsVisible ? NowPlayingChip : PowerButton);
         return true;
     }
 
@@ -101,7 +101,7 @@ public partial class MainWindow
 
     private void OpenQuick(bool volume)
     {
-        if (QuickOpen || PowerOpen || _overlayPhase != OverlayPhase.None) return;
+        if (QuickOpen || PowerOpen || OverlayVisible) return;
 
         VirtualKeyboard.Hide();
         _quickReturnFocus = Keyboard.FocusedElement;
@@ -183,7 +183,7 @@ public partial class MainWindow
         _wifiCts?.Cancel();
         var cts = _wifiCts = new CancellationTokenSource();
 
-        WifiStatus.Text = "Looking for networks…";
+        WifiStatus.Text = Loc.T("Looking for networks…");
         WifiList.Children.Clear();
         WifiDisconnectButton.IsEnabled = false;
         var kind = SystemInfo.GetNetwork();
@@ -210,8 +210,8 @@ public partial class MainWindow
         {
             // No adapter, Wi-Fi switched off, or the WLAN service is not running.
             WifiStatus.Text = kind == NetworkKind.Ethernet
-                ? "Connected by Ethernet cable. No Wi-Fi adapter is available."
-                : "No Wi-Fi adapter is available (or Wi-Fi is turned off in Windows).";
+                ? Loc.T("Connected by Ethernet cable. No Wi-Fi adapter is available.")
+                : Loc.T("No Wi-Fi adapter is available (or Wi-Fi is turned off in Windows).");
             FinishWifiLoad();
             return;
         }
@@ -219,15 +219,15 @@ public partial class MainWindow
         var connected = WifiNetsh.ParseConnectedSsid(interfacesText);
         var list = WifiNetsh.ParseNetworks(networksText, connected, WifiNetsh.ParseProfiles(profilesText));
 
-        WifiStatus.Text = connected is not null ? $"Connected to {connected}"
-            : kind == NetworkKind.Ethernet ? "Connected by Ethernet cable. Wi-Fi is not connected."
-            : "Not connected to a Wi-Fi network.";
+        WifiStatus.Text = connected is not null ? Loc.F("Connected to {0}", connected)
+            : kind == NetworkKind.Ethernet ? Loc.T("Connected by Ethernet cable. Wi-Fi is not connected.")
+            : Loc.T("Not connected to a Wi-Fi network.");
         WifiDisconnectButton.IsEnabled = connected is not null;
 
         foreach (var network in list) WifiList.Children.Add(BuildWifiRow(network));
         if (list.Count == 0)
         {
-            var empty = new TextBlock { Text = "No networks found nearby.", FontSize = 14, Margin = new Thickness(2, 0, 0, 6) };
+            var empty = new TextBlock { Text = Loc.T("No networks found nearby."), FontSize = 14, Margin = new Thickness(2, 0, 0, 6) };
             empty.SetResourceReference(TextBlock.ForegroundProperty, "TextMuted");
             WifiList.Children.Add(empty);
         }
@@ -258,7 +258,7 @@ public partial class MainWindow
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        var detail = network.Connected ? "Connected" : network.Known ? "Saved" : "";
+        var detail = network.Connected ? Loc.T("Connected") : network.Known ? Loc.T("Saved") : "";
         if (network.Signal is { } signal) detail = detail.Length == 0 ? $"{signal}%" : $"{detail} · {signal}%";
         var status = new TextBlock
         {
@@ -300,7 +300,7 @@ public partial class MainWindow
         if (_wifiBusy) return;
         if (network.Connected)
         {
-            ShowToast($"Already connected to {network.Ssid}");
+            ShowToast(Loc.F("Already connected to {0}", network.Ssid));
             return;
         }
         if (network.Ssid.Contains('"'))
@@ -320,7 +320,7 @@ public partial class MainWindow
         var joined = false;
         try
         {
-            WifiStatus.Text = $"Connecting to {ssid}…";
+            WifiStatus.Text = Loc.F("Connecting to {0}…", ssid);
             await NetshRunner.RunAsync($"wlan connect name=\"{ssid}\"");
 
             for (var attempt = 0; attempt < 10 && QuickOpen; attempt++)
@@ -339,7 +339,7 @@ public partial class MainWindow
             _wifiBusy = false;
         }
 
-        ShowToast(joined ? $"Connected to {ssid}" : $"Could not connect to {ssid}");
+        ShowToast(joined ? Loc.F("Connected to {0}", ssid) : Loc.F("Could not connect to {0}", ssid));
         UpdateStatusIcons();
         if (QuickOpen)
         {
@@ -382,7 +382,7 @@ public partial class MainWindow
     private void ShowWifiPassword(string ssid)
     {
         _wifiPendingSsid = ssid;
-        WifiPasswordLabel.Text = $"Password for \"{ssid}\"";
+        WifiPasswordLabel.Text = Loc.F("Password for \"{0}\"", ssid);
         WifiPasswordBox.Text = "";
         WifiListPanel.Visibility = Visibility.Collapsed;
         WifiPasswordPanel.Visibility = Visibility.Visible;

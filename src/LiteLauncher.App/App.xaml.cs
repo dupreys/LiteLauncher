@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using LiteLauncher.Core;
 using LiteLauncher.Core.Settings;
 
 namespace LiteLauncher.App;
@@ -22,6 +23,7 @@ public partial class App : Application
         InstallErrorHandlers();
 
         Settings = Store.Load();
+        Loc.Set(Settings.Language ?? Loc.Detect(System.Globalization.CultureInfo.CurrentUICulture));
         Sounds.Enabled = Settings.UiSounds;
         Sounds.Volume = Settings.UiVolume;
         Sounds.Silence(TimeSpan.FromSeconds(1)); // no blip while the first card takes focus

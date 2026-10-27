@@ -73,7 +73,7 @@ public partial class MainWindow
         }
 
         _checkingUpdate = true;
-        UpdateLabel.Text = "Checking for updates…";
+        UpdateLabel.Text = Loc.T("Checking for updates…");
         try
         {
             _update = await UpdateChecker.CheckAsync(Http, AppInfo.Repository, AppInfo.Current);
@@ -91,12 +91,12 @@ public partial class MainWindow
     {
         if (_update is { } info)
         {
-            UpdateLabel.Text = $"Version {info.Version.Major}.{info.Version.Minor}.{Math.Max(info.Version.Build, 0)} is available: open the download page";
-            if (toast) ShowToast($"LiteLauncher {info.Tag} is available. See Settings > General.");
+            UpdateLabel.Text = Loc.F("Version {0} is available: open the download page", $"{info.Version.Major}.{info.Version.Minor}.{Math.Max(info.Version.Build, 0)}");
+            if (toast) ShowToast(Loc.F("LiteLauncher {0} is available. See Settings > General.", info.Tag));
         }
         else
         {
-            UpdateLabel.Text = "Check for updates now";
+            UpdateLabel.Text = Loc.T("Check for updates now");
             if (toast && manual) ShowToast("You have the latest version (or GitHub could not be reached).");
         }
     }

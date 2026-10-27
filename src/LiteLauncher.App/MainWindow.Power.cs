@@ -1,3 +1,4 @@
+using LiteLauncher.Core;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.NetworkInformation;
@@ -48,9 +49,9 @@ public partial class MainWindow
         NetNone.Visibility = network == NetworkKind.None ? Visibility.Visible : Visibility.Collapsed;
         NetworkIcon.ToolTip = network switch
         {
-            NetworkKind.Wifi => "Wi-Fi connected",
-            NetworkKind.Ethernet => "Ethernet connected",
-            _ => "No network connection",
+            NetworkKind.Wifi => Loc.T("Wi-Fi connected"),
+            NetworkKind.Ethernet => Loc.T("Ethernet connected"),
+            _ => Loc.T("No network connection"),
         };
 
         if (SystemVolume.TryGet(out var level, out var muted))
@@ -59,7 +60,7 @@ public partial class MainWindow
             var silent = muted || level <= 0.001f;
             VolWaves.Visibility = silent ? Visibility.Collapsed : Visibility.Visible;
             VolMuted.Visibility = silent ? Visibility.Visible : Visibility.Collapsed;
-            VolumeIcon.ToolTip = muted ? "Sound muted" : $"Volume {Math.Round(level * 100)}%";
+            VolumeIcon.ToolTip = muted ? Loc.T("Sound muted") : Loc.F("Volume {0}%", Math.Round(level * 100));
         }
         else
         {
@@ -81,7 +82,7 @@ public partial class MainWindow
 
     private void OpenPower()
     {
-        if (PowerOpen || QuickOpen || _overlayPhase != OverlayPhase.None) return; // the launch cover is above this menu
+        if (PowerOpen || QuickOpen || OverlayVisible) return; // the launch cover is above this menu
         VirtualKeyboard.Hide();
         _powerReturnFocus = Keyboard.FocusedElement;
         ShowPowerMain();
@@ -101,8 +102,8 @@ public partial class MainWindow
 
     private void ShowPowerMain()
     {
-        PowerTitle.Text = "Power";
-        PowerSubtitle.Text = "What should the PC do?";
+        PowerTitle.Text = Loc.T("Power");
+        PowerSubtitle.Text = Loc.T("What should the PC do?");
         PowerMain.Visibility = Visibility.Visible;
         PowerConfirm.Visibility = Visibility.Collapsed;
     }
@@ -120,9 +121,9 @@ public partial class MainWindow
         // Restart and shut down close everything that is open, so they ask first (Cancel is pre-selected).
         _pendingPower = action;
         var restart = action == PowerAction.Restart;
-        PowerTitle.Text = restart ? "Restart?" : "Shut down?";
-        PowerSubtitle.Text = "Open games and apps will be closed. Unsaved progress may be lost.";
-        PowerConfirmLabel.Text = restart ? "Restart now" : "Shut down now";
+        PowerTitle.Text = Loc.T(restart ? "Restart?" : "Shut down?");
+        PowerSubtitle.Text = Loc.T("Open games and apps will be closed. Unsaved progress may be lost.");
+        PowerConfirmLabel.Text = Loc.T(restart ? "Restart now" : "Shut down now");
         PowerMain.Visibility = Visibility.Collapsed;
         PowerConfirm.Visibility = Visibility.Visible;
         Keyboard.Focus(PowerConfirmCancelButton);

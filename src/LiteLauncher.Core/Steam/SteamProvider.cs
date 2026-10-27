@@ -27,13 +27,29 @@ public sealed class SteamProvider : IGameProvider
     /// <summary>
     /// Launches through the Steam client (steam://rungameid/...) so overlay,
     /// cloud saves and DRM keep working exactly like a launch from Steam itself.
-    /// If Steam isn't running, Windows starts it first.
+    /// If Steam is not running it is started minimized in the background ("-silent"), so its window does not
+    /// cover LiteLauncher and the launcher is what you see again when the game closes.
     /// </summary>
     public void Launch(Game game)
     {
         if (game.Source != ProviderName || !game.Id.All(char.IsDigit))
             throw new ArgumentException("Not a Steam game.", nameof(game));
 
-        Process.Start(new ProcessStartInfo($"steam://rungameid/{game.Id}") { UseShellExecute = true });
+        var exe = _steamPath is null ? null : Path.Combine(_steamPath, "steam.exe");
+        if (exe is not null && File.Exists(exe) && !IsRunning("steam"))
+        {
+            Process.Start(new ProcessStartInfo(exe, $"-silent -applaunch {game.Id}") { UseShellExecute = false })?.Dispose();
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo($"steam://rungameid/{game.Id}") { UseShellExecute = true })?.Dispose();
+    }
+
+    private static bool IsRunning(string processName)
+    {
+        var found = Process.GetProcessesByName(processName);
+        var running = found.Length > 0;
+        foreach (var p in found) p.Dispose();
+        return running;
     }
 }

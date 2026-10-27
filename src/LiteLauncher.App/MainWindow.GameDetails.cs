@@ -38,7 +38,7 @@ public partial class MainWindow
         AchievementsList.Children.Clear();
         DetailsLogo.Visibility = Visibility.Collapsed;
         DetailsTitle.Visibility = Visibility.Visible;
-        DetailsManageLabel.Text = "Manage   ▾";
+        DetailsManageLabel.Text = Loc.T("Manage   ▾");
         FillDetails(item);
         GameDetails.Visibility = Visibility.Visible;
         App.Sounds.Play(SoundKind.Select);
@@ -58,7 +58,7 @@ public partial class MainWindow
         DetailsSize.Text = GameInfo.FormatSize(game.SizeOnDisk);
         DetailsLastPlayed.Text = game.LastPlayed is { } played
             ? played.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture)
-            : "Never";
+            : Loc.T("Never");
         _ = LoadDetailsImagesAsync(item);
     }
 
@@ -83,11 +83,11 @@ public partial class MainWindow
         var cts = _detailsCts = new CancellationTokenSource();
         var key = GameSorter.Key(game);
 
-        DetailsMeta.Text = game.Source == SteamProvider.ProviderName ? "Loading store information…" : "";
+        DetailsMeta.Text = game.Source == SteamProvider.ProviderName ? Loc.T("Loading store information…") : "";
         DetailsGenres.Text = "";
         DetailsDescription.Text = game.Source == SteamProvider.ProviderName
             ? ""
-            : $"Installed from the {game.Source} store. Use \"More about the game\" to open its store page.";
+            : Loc.F("Installed from the {0} store. Use \"More about the game\" to open its store page.", game.Source);
         DetailsPlaytime.Text = "—";
         _ = LoadAchievementsAsync(game, key, cts.Token); // independent of the store info: shows up when it arrives
 
@@ -97,9 +97,9 @@ public partial class MainWindow
         var meta = new List<string>();
         if (details.Developer is not null) meta.Add(details.Developer);
         if (details.ReleaseDate is not null) meta.Add(details.ReleaseDate);
-        if (details.PlayersNow is { } players) meta.Add($"{players.ToString("N0", CultureInfo.CurrentCulture)} playing now");
+        if (details.PlayersNow is { } players) meta.Add(Loc.F("{0} playing now", players.ToString("N0", CultureInfo.CurrentCulture)));
         DetailsMeta.Text = meta.Count > 0 ? string.Join("   ·   ", meta)
-            : game.Source == SteamProvider.ProviderName ? "Store information is not available right now." : "";
+            : game.Source == SteamProvider.ProviderName ? Loc.T("Store information is not available right now.") : "";
         DetailsGenres.Text = string.Join(" · ", details.Genres);
         if (details.Description is not null) DetailsDescription.Text = details.Description;
         var minutes = details.PlaytimeMinutes
@@ -118,7 +118,7 @@ public partial class MainWindow
             return;
         }
 
-        DetailsAchievements.Text = "Loading…";
+        DetailsAchievements.Text = Loc.T("Loading…");
         var result = await Achievements.FetchAsync(Http, game, App.Settings.SteamId, App.Settings.SteamWebApiKey, cancellationToken);
         if (cancellationToken.IsCancellationRequested || _detailsKey != key) return;
 
@@ -176,7 +176,7 @@ public partial class MainWindow
     {
         var open = ManagePanel.Visibility != Visibility.Visible;
         ManagePanel.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-        DetailsManageLabel.Text = open ? "Manage   ▴" : "Manage   ▾";
+        DetailsManageLabel.Text = Loc.T(open ? "Manage   ▴" : "Manage   ▾");
         if (open && DetailsItem() is { } item)
         {
             var original = item.Game.OriginalName ?? item.Game.Name;
@@ -209,7 +209,7 @@ public partial class MainWindow
         if (_detailsKey is null) return;
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = $"Choose a {kind} image",
+            Title = Loc.F("Choose a {0} image", Loc.T(kind)),
             Filter = "Pictures|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.webp|All files|*.*",
         };
         if (dialog.ShowDialog(this) != true) return;

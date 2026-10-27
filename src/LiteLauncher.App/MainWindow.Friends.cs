@@ -1,3 +1,4 @@
+using LiteLauncher.Core;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -117,12 +118,12 @@ public partial class MainWindow
         }
 
         FriendsTileSub.Text =
-            !SteamLoginUsers.IsSteamId64(App.Settings.SteamId) ? "Sign in with Steam to see friends" :
-            App.Settings.SteamWebApiKey is null ? "Add a Steam Web API key in Settings" :
-            _friendsError is not null ? "Friends list unavailable" :
-            _friendsLoading && _friends.Count == 0 ? "Loading…" :
-            _friends.Count == 0 ? "No friends online" :
-            _friends.Count == 1 ? "1 friend online" : $"{_friends.Count} friends online";
+            !SteamLoginUsers.IsSteamId64(App.Settings.SteamId) ? Loc.T("Sign in with Steam to see friends") :
+            App.Settings.SteamWebApiKey is null ? Loc.T("Add a Steam Web API key in Settings") :
+            _friendsError is not null ? Loc.T("Friends list unavailable") :
+            _friendsLoading && _friends.Count == 0 ? Loc.T("Loading…") :
+            _friends.Count == 0 ? Loc.T("No friends online") :
+            _friends.Count == 1 ? Loc.T("1 friend online") : Loc.F("{0} friends online", _friends.Count);
     }
 
     private async Task RefreshFriendsAsync()
@@ -158,11 +159,11 @@ public partial class MainWindow
         }
         catch (UnauthorizedAccessException)
         {
-            _friendsError = "Steam refused the request. Check your Web API key, and that your friends list is not private.";
+            _friendsError = Loc.T("Steam refused the request. Check your Web API key, and that your friends list is not private.");
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            _friendsError = "Could not reach Steam. Check your internet connection.";
+            _friendsError = Loc.T("Could not reach Steam. Check your internet connection.");
         }
         finally
         {
@@ -179,12 +180,12 @@ public partial class MainWindow
     {
         var signedIn = SteamLoginUsers.IsSteamId64(App.Settings.SteamId);
         FriendsStatus.Text =
-            !signedIn ? "Sign in with Steam (Settings → Steam account) to see your friends." :
-            App.Settings.SteamWebApiKey is null ? "Add your free Steam Web API key in Settings → Integrations to see who is online." :
-            _friendsError ?? (_friendsLoading && _friends.Count == 0 ? "Loading…" :
-                              _friends.Count == 0 ? "None of your friends are online right now." :
-                              $"{_friends.Count} online · press A to chat");
-        FriendsSetupLabel.Text = !signedIn || App.Settings.SteamWebApiKey is null ? "Set up…" : "Refresh";
+            !signedIn ? Loc.T("Sign in with Steam (Settings → Steam account) to see your friends.") :
+            App.Settings.SteamWebApiKey is null ? Loc.T("Add your free Steam Web API key in Settings → Integrations to see who is online.") :
+            _friendsError ?? (_friendsLoading && _friends.Count == 0 ? Loc.T("Loading…") :
+                              _friends.Count == 0 ? Loc.T("None of your friends are online right now.") :
+                              Loc.F("{0} online · press A to chat", _friends.Count));
+        FriendsSetupLabel.Text = !signedIn || App.Settings.SteamWebApiKey is null ? Loc.T("Set up…") : Loc.T("Refresh");
     }
 
     private void OpenFriends()

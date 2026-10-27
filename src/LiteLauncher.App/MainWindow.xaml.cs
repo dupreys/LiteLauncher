@@ -54,6 +54,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        InitLanguage();
 
         _steamPath = SteamLocator.FindSteamPath();
         _providers = new IGameProvider[] { new SteamProvider(_steamPath), new LiteLauncher.Core.Epic.EpicProvider() };
@@ -253,8 +254,8 @@ public partial class MainWindow : Window
 
         EmptyText.Visibility = hero is null ? Visibility.Visible : Visibility.Collapsed;
         EmptyText.Text = _providers.Any(p => p.IsAvailable)
-            ? "No installed games found."
-            : "Neither Steam nor the Epic Games Launcher was found on this PC.";
+            ? Loc.T("No installed games found.")
+            : Loc.T("Neither Steam nor the Epic Games Launcher was found on this PC.");
 
         if (_current != AppView.Home) return;
 
@@ -356,7 +357,7 @@ public partial class MainWindow : Window
 
             var item = _items.FirstOrDefault(i => GameSorter.Key(i.Game) == key);
             _nowPlaying = item?.Name;
-            if (item is not null) ShowToast($"Now playing {item.Name}");
+            if (item is not null) ShowToast(Loc.F("Now playing {0}", item.Name));
             ScheduleRefresh();
         }
         else if (previous > 0)
@@ -395,18 +396,18 @@ public partial class MainWindow : Window
         var query = SearchBox.Text.Trim();
         var filtering = query.Length > 0 || _filter != LibraryFilter.Installed;
 
-        CountText.Text = filtering ? $"{shown} of {_items.Count} games" : $"{_items.Count} games";
+        CountText.Text = filtering ? Loc.F("{0} of {1} games", shown, _items.Count) : Loc.F("{0} games", _items.Count);
 
         NoResultsText.Visibility = shown == 0 ? Visibility.Visible : Visibility.Collapsed;
         NoResultsText.Text = query.Length > 0
-            ? $"No game here matches \"{query}\"."
+            ? Loc.F("No game here matches \"{0}\".", query)
             : _filter switch
             {
-                LibraryFilter.Recent => "Nothing played yet. Games you play show up here.",
-                LibraryFilter.Favorites => "No favourites yet. Press X on a game to add it here.",
-                LibraryFilter.Steam => "No installed Steam games.",
-                LibraryFilter.Epic => "No installed Epic games.",
-                _ => "No installed games found.",
+                LibraryFilter.Recent => Loc.T("Nothing played yet. Games you play show up here."),
+                LibraryFilter.Favorites => Loc.T("No favourites yet. Press X on a game to add it here."),
+                LibraryFilter.Steam => Loc.T("No installed Steam games."),
+                LibraryFilter.Epic => Loc.T("No installed Epic games."),
+                _ => Loc.T("No installed games found."),
             };
     }
 
@@ -471,7 +472,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is Win32Exception or ArgumentException or InvalidOperationException)
         {
-            ShowToast($"Could not launch {item.Name}");
+            ShowToast(Loc.F("Could not launch {0}", item.Name));
             return false;
         }
     }
@@ -622,6 +623,43 @@ public partial class MainWindow : Window
         if (virtualKeyboard) _ = VirtualKeyboard.ShowAsync();
     }
 
+    /// <summary>
+    /// Controller buttons while the search field has focus: Y shows the keyboard, Start confirms the search,
+    /// B closes the keyboard first (and the search on the second press). While the keyboard is up, the other buttons
+    /// are ignored here so they cannot move focus away from the field.
+    /// </summary>
+    private bool HandleSearchGamepad(GamepadButton button)
+    {
+        if (!ReferenceEquals(Keyboard.FocusedElement, SearchBox)) return false;
+        var keyboardUp = VirtualKeyboard.IsVisible;
+
+        switch (button)
+        {
+            case GamepadButton.Start:
+                ConfirmSearch();
+                return true;
+            case GamepadButton.B:
+                if (keyboardUp)
+                {
+                    VirtualKeyboard.Hide();
+                    App.Sounds.Play(SoundKind.Back);
+                }
+                else
+                {
+                    CloseSearch();
+                }
+                return true;
+            case GamepadButton.Y:
+                if (!keyboardUp) _ = VirtualKeyboard.ShowAsync();
+                return true;
+            case GamepadButton.A:
+                if (!keyboardUp) ConfirmSearch();
+                return true;
+            default:
+                return keyboardUp;
+        }
+    }
+
     /// <summary>A (or Enter) in the search field: accept what was typed and jump to the results.</summary>
     private void ConfirmSearch()
     {
@@ -678,7 +716,8 @@ public partial class MainWindow : Window
 
         if (searching)
         {
-            AddHint("A", "Confirm");
+            AddHint("Start", "Confirm");
+            AddHint("Y", "Keyboard");
             AddHint("B", "Close");
             return;
         }
@@ -688,6 +727,8 @@ public partial class MainWindow : Window
             case AppView.Home:
                 AddHint("A", "Select");
                 AddHint("Y", "Search");
+                AddHint("Start", "Details");
+                AddHint("Select", "Power");
                 break;
             case AppView.Library:
                 AddHint("A", "Play");
@@ -695,18 +736,21 @@ public partial class MainWindow : Window
                 AddHint("LB", "Prev filter");
                 AddHint("RB", "Next filter");
                 AddHint("Y", "Search");
+                AddHint("Start", "Details");
+                AddHint("Select", "Power");
                 AddHint("B", "Back");
                 break;
             default:
                 AddHint("A", "Select");
                 AddHint("B", "Back");
+                AddHint("Select", "Power");
                 break;
         }
     }
 
     private void AddHint(string key, string label)
     {
-        var colour = key switch { "A" => "#6DC04B", "B" => "#E5484D", "X" => "#4C9AFF", _ => "#F5C518" };
+        var colour = key switch { "A" => "#6DC04B", "B" => "#E5484D", "X" => "#4C9AFF", "Y" => "#F5C518", _ => "#5A5F6B" };
 
         HintBar.Children.Add(new Border
         {
@@ -729,7 +773,7 @@ public partial class MainWindow : Window
 
         HintBar.Children.Add(new TextBlock
         {
-            Text = label,
+            Text = Loc.T(label),
             FontSize = 16,
             Margin = new Thickness(0, 0, 22, 0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -753,7 +797,7 @@ public partial class MainWindow : Window
 
     private void ShowToast(string text)
     {
-        ToastText.Text = text;
+        ToastText.Text = Loc.T(text);
         ToastBorder.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(150)));
         _toastTimer.Stop();
         _toastTimer.Start();
@@ -772,6 +816,8 @@ public partial class MainWindow : Window
     {
         var settings = App.Settings;
         DimOverlay.Opacity = settings.ShowBackdrop ? settings.BackdropDim : 0;
+        BottomShade.Opacity = settings.FullBackdrop && settings.ShowBackdrop ? 0.55 : 0.92; // full screen art needs less shade
+        FitBackdropToggle.IsEnabled = !settings.FullBackdrop;
         ConfigureBackdrop(BackdropA, BackdropA.Source); // the fit/fill choice may have changed
         ConfigureBackdrop(BackdropB, BackdropB.Source);
         ConfigureBackdrop(OverlayBackdrop, OverlayBackdrop.Source);
@@ -838,7 +884,7 @@ public partial class MainWindow : Window
 
     private static void ConfigureBackdrop(System.Windows.Controls.Image target, ImageSource? source)
     {
-        var fit = App.Settings.FitBackdrop
+        var fit = App.Settings.FitBackdrop && !App.Settings.FullBackdrop
                   && source is System.Windows.Media.Imaging.BitmapSource { PixelHeight: > 0 } bitmap
                   && (double)bitmap.PixelWidth / bitmap.PixelHeight >= FitMinAspect;
 
@@ -983,6 +1029,7 @@ public partial class MainWindow : Window
         if (HandleDetailsGamepad(button)) return;
         if (HandleFriendsGamepad(button)) return;
         if (HandleLaunchersGamepad(button)) return;
+        if (HandleSearchGamepad(button)) return;
         if (HandleLibraryGamepad(button)) return;
         if (button == GamepadButton.A && Keyboard.FocusedElement is TextBox box && (box == SteamApiKeyBox || box == GridDbKeyBox))
         {
@@ -1047,7 +1094,7 @@ public partial class MainWindow : Window
         DetailsOpen ? GameDetails :
         FriendsOpen ? FriendsPanel :
         LaunchersOpen ? LaunchersPanel :
-        _overlayPhase != OverlayPhase.None ? LaunchOverlay : // not Visibility: the fade-out must not trap focus
+        OverlayVisible ? LaunchOverlay : // not Visibility: the fade-out must not trap focus
         null;
 
     private void OnPreviewFocusChange(object sender, KeyboardFocusChangedEventArgs e)

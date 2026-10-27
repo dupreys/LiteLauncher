@@ -7,13 +7,13 @@ public enum FriendState { Offline = 0, Online = 1, Busy = 2, Away = 3, Snooze = 
 public sealed record SteamFriend(string SteamId, string Name, string? AvatarUrl, FriendState State, string? Game)
 {
     public string StatusText => Game is not null
-        ? $"Playing {Game}"
+        ? Loc.F("Playing {0}", Game)
         : State switch
         {
-            FriendState.Busy => "Busy",
-            FriendState.Away or FriendState.Snooze => "Away",
-            FriendState.Offline => "Offline",
-            _ => "Online",
+            FriendState.Busy => Loc.T("Busy"),
+            FriendState.Away or FriendState.Snooze => Loc.T("Away"),
+            FriendState.Offline => Loc.T("Offline"),
+            _ => Loc.T("Online"),
         };
 }
 

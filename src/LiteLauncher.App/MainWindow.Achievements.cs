@@ -90,7 +90,7 @@ public partial class MainWindow
         var description = new TextBlock
         {
             // Hidden achievements have no text until you earn them.
-            Text = achievement.Description ?? (achievement.Unlocked ? "" : "Hidden achievement"),
+            Text = achievement.Description ?? (achievement.Unlocked ? "" : Loc.T("Hidden achievement")),
             FontSize = 13,
             TextWrapping = TextWrapping.Wrap,
             Margin = new Thickness(0, 2, 0, 0),
@@ -102,8 +102,8 @@ public partial class MainWindow
             Text = achievement.Unlocked
                 ? achievement.UnlockedAt is { } at
                     ? "✓  " + at.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture)
-                    : "✓  Unlocked"
-                : "Locked",
+                    : "✓  " + Loc.T("Unlocked")
+                : Loc.T("Locked"),
             FontSize = 13,
             VerticalAlignment = VerticalAlignment.Center,
             Margin = new Thickness(16, 0, 0, 0),

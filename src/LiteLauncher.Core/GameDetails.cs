@@ -97,7 +97,7 @@ public static class GameInfo
     }
 
     public static string FormatPlaytime(int minutes) =>
-        minutes < 60 ? $"{minutes} min" : $"{minutes / 60} hrs {minutes % 60} min";
+        minutes < 60 ? Loc.F("{0} min", minutes) : Loc.F("{0} hrs {1} min", minutes / 60, minutes % 60);
 
     public static string FormatSize(long bytes) => bytes <= 0
         ? "—"

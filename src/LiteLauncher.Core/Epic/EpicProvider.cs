@@ -97,7 +97,51 @@ public sealed class EpicProvider : IGameProvider
     public void Launch(Game game)
     {
         if (game.Source != ProviderName) throw new ArgumentException("Not an Epic game.", nameof(game));
-        Process.Start(new ProcessStartInfo(LaunchUri(game)) { UseShellExecute = true });
+
+        var uri = LaunchUri(game);
+        var exe = FindLauncherExe();
+        if (exe is not null && !IsRunning("EpicGamesLauncher"))
+        {
+            // Start the launcher minimized first so its window does not cover LiteLauncher, then give it the game
+            // once it has had a moment to start (a launch request sent too early is dropped).
+            Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Minimized, WorkingDirectory = Path.GetDirectoryName(exe)! })?.Dispose();
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(6));
+                try { Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true })?.Dispose(); }
+                catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException) { /* the overlay times out and says so */ }
+            });
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true })?.Dispose();
+    }
+
+    /// <summary>The Epic Games Launcher program, in its usual install folders; null when not found.</summary>
+    public static string? FindLauncherExe()
+    {
+        foreach (var root in new[]
+                 {
+                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                 })
+        {
+            if (string.IsNullOrEmpty(root)) continue;
+            foreach (var bits in new[] { "Win64", "Win32" })
+            {
+                var path = Path.Combine(root, "Epic Games", "Launcher", "Portal", "Binaries", bits, "EpicGamesLauncher.exe");
+                if (File.Exists(path)) return path;
+            }
+        }
+        return null;
+    }
+
+    private static bool IsRunning(string processName)
+    {
+        var found = Process.GetProcessesByName(processName);
+        var running = found.Length > 0;
+        foreach (var p in found) p.Dispose();
+        return running;
     }
 
     public static string LaunchUri(Game game)

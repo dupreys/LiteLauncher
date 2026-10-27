@@ -1,3 +1,4 @@
+using LiteLauncher.Core;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -67,6 +68,7 @@ public partial class MainWindow
         DimSlider.Value = settings.BackdropDim * 100;
         ShowBackdropToggle.IsChecked = settings.ShowBackdrop;
         FitBackdropToggle.IsChecked = settings.FitBackdrop;
+        FullBackdropToggle.IsChecked = settings.FullBackdrop;
         UiSoundsToggle.IsChecked = settings.UiSounds;
         UiVolumeSlider.Value = settings.UiVolume * 100;
         FullscreenToggle.IsChecked = settings.StartFullscreen;
@@ -195,6 +197,12 @@ public partial class MainWindow
             ApplyBackdropSettings();
             QueueSave();
         }
+        else if (ReferenceEquals(toggle, FullBackdropToggle))
+        {
+            App.Settings.FullBackdrop = on;
+            ApplyBackdropSettings();
+            QueueSave();
+        }
         else if (ReferenceEquals(toggle, FitBackdropToggle))
         {
             App.Settings.FitBackdrop = on;
@@ -268,22 +276,22 @@ public partial class MainWindow
         // Top bar, home tile and the Profile panel
         PersonaText.Text = name;
         SteamBadge.Visibility = signedIn ? Visibility.Visible : Visibility.Collapsed;
-        SubText.Text = $"{_items.Count} games"
-                       + (signedIn ? string.Empty : "  ·  not signed in")
-                       + (_nowPlaying is null ? string.Empty : $"  ·  Playing {_nowPlaying}");
+        SubText.Text = Loc.F("{0} games", _items.Count)
+                       + (signedIn ? string.Empty : "  ·  " + Loc.T("not signed in"))
+                       + (_nowPlaying is null ? string.Empty : "  ·  " + Loc.F("Playing {0}", _nowPlaying));
         SetAvatar(picture, name, AvatarBrush, AvatarInitial);
         SetAvatar(picture, name, ProfileAvatarBrush, ProfileAvatarInitial);
 
         UpdateFriendsTile();
 
         ProfileNamePreview.Text = name;
-        ProfileSubText.Text = signedIn ? "Signed in with Steam" : "Not signed in to Steam";
+        ProfileSubText.Text = Loc.T(signedIn ? "Signed in with Steam" : "Not signed in to Steam");
         RemovePictureButton.Visibility = _customAvatar is null ? Visibility.Collapsed : Visibility.Visible;
 
         // Steam account panel: the real Steam identity
         SetAvatar(_avatar, steamName ?? "Guest", PanelAvatarBrush, PanelAvatarInitial);
-        AccountName.Text = steamName ?? "Not signed in";
-        AccountId.Text = signedIn ? $"Steam ID {settings.SteamId}" : string.Empty;
+        AccountName.Text = steamName ?? Loc.T("Not signed in");
+        AccountId.Text = signedIn ? Loc.F("Steam ID {0}", settings.SteamId) : string.Empty;
         SignOutButton.Visibility = signedIn ? Visibility.Visible : Visibility.Collapsed;
         DetectButton.Visibility = _steamPath is not null ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -312,7 +320,7 @@ public partial class MainWindow
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Choose a profile picture",
+            Title = Loc.T("Choose a profile picture"),
             Filter = "Pictures|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff|All files|*.*",
         };
         if (dialog.ShowDialog(this) != true) return;
@@ -373,7 +381,7 @@ public partial class MainWindow
 
         _customAvatar = await ImageLoader.LoadAsync(destination, decodeWidth: 256);
         UpdateAccountUi();
-        ShowToast($"Avatar set: {preset.Name}");
+        ShowToast(Loc.F("Avatar set: {0}", preset.Name));
     }
 
     private void OnRemovePictureClick(object sender, RoutedEventArgs e)
@@ -407,8 +415,8 @@ public partial class MainWindow
         }
 
         var cts = _signInCts = new CancellationTokenSource();
-        SignInLabel.Text = "Cancel sign-in";
-        AccountStatus.Text = "The Steam sign-in page opened in your browser. Finish signing in there…";
+        SignInLabel.Text = Loc.T("Cancel sign-in");
+        AccountStatus.Text = Loc.T("The Steam sign-in page opened in your browser. Finish signing in there…");
 
         try
         {
@@ -420,7 +428,7 @@ public partial class MainWindow
 
             if (steamId is null)
             {
-                AccountStatus.Text = "Sign-in was cancelled or could not be verified.";
+                AccountStatus.Text = Loc.T("Sign-in was cancelled or could not be verified.");
             }
             else
             {
@@ -430,13 +438,13 @@ public partial class MainWindow
         }
         catch (Exception ex) when (ex is Win32Exception or HttpListenerException or InvalidOperationException)
         {
-            AccountStatus.Text = $"Sign-in failed: {ex.Message}";
+            AccountStatus.Text = Loc.F("Sign-in failed: {0}", ex.Message);
         }
         finally
         {
             cts.Dispose();
             _signInCts = null;
-            SignInLabel.Text = "Sign in with Steam";
+            SignInLabel.Text = Loc.T("Sign in with Steam");
         }
     }
 
@@ -445,7 +453,7 @@ public partial class MainWindow
         var account = _steamPath is null ? null : SteamLoginUsers.ReadMostRecent(_steamPath);
         if (account is null)
         {
-            AccountStatus.Text = "No signed-in Steam account was found on this PC.";
+            AccountStatus.Text = Loc.T("No signed-in Steam account was found on this PC.");
             return;
         }
 
@@ -461,13 +469,13 @@ public partial class MainWindow
         SaveSettingsNow();
 
         UpdateAccountUi();
-        AccountStatus.Text = "Signed out.";
+        AccountStatus.Text = Loc.T("Signed out.");
         Keyboard.Focus(SignInButton);
     }
 
     private async Task ApplyAccountAsync(string steamId, string? fallbackName)
     {
-        AccountStatus.Text = "Loading your Steam profile…";
+        AccountStatus.Text = Loc.T("Loading your Steam profile…");
 
         var profile = await SteamProfile.FetchAsync(Http, steamId);
 
@@ -480,8 +488,8 @@ public partial class MainWindow
         UpdateAccountUi();
 
         AccountStatus.Text = profile is null
-            ? "Signed in. Your public profile could not be loaded (private profile or offline), so the picture may be missing."
-            : "Signed in.";
+            ? Loc.T("Signed in. Your public profile could not be loaded (private profile or offline), so the picture may be missing.")
+            : Loc.T("Signed in.");
     }
 
     private async Task LoadSavedAvatarAsync()
@@ -525,6 +533,6 @@ public partial class MainWindow
     private async void OnRescanClick(object sender, RoutedEventArgs e)
     {
         await RefreshAsync();
-        ShowToast($"Library rescanned: {_items.Count} games");
+        ShowToast(Loc.F("Library rescanned: {0} games", _items.Count));
     }
 }

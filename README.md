@@ -17,19 +17,19 @@ Inspirado em [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMo
 ## Instalação
 
 1. Abra a página de [**Releases**](../../releases) do projeto.
-2. Baixe o `LiteLauncher-Setup.exe` (instalador) ou o `LiteLauncher-portable.zip` (sem instalar).
-3. Execute. O Windows pode mostrar o aviso "O Windows protegeu seu computador", pois o programa não tem assinatura digital paga. Clique em **Mais informações → Executar assim mesmo**.
+2. Baixe o **`LiteLauncher-Setup.exe`**.
+3. Execute o arquivo e siga o instalador. O Windows pode mostrar o aviso "O Windows protegeu seu computador", pois o programa não tem assinatura digital paga. Clique em **Mais informações → Executar assim mesmo**.
 
-Os instaladores não exigem .NET instalado. Como gerar o instalador a partir do código: [docs/COMO-GERAR-O-EXE.pt-BR.md](docs/COMO-GERAR-O-EXE.pt-BR.md).
+Não precisa ter o .NET instalado.
 
 ## Recursos
 
 **Tela inicial estilo Xbox**
-- Fundo que muda para a arte do jogo selecionado. Em Configurações você escolhe entre mostrar a imagem inteira (padrão) ou preencher a tela
+- Fundo que muda para a arte do jogo selecionado, ocupando a tela inteira como na tela inicial do Xbox, com sombreamento suave nos cantos. Em Configurações → Tema você pode escolher o estilo com a imagem só na parte de cima, esmaecendo para o fundo (inteira ou preenchendo)
 - Cartão grande do último jogo jogado e fila dos jogos recentes
 - Atalhos: *My games & apps*, *Launchers*, *Settings* e *Friends*; menu de texto (Store, Community, Exit)
 - Menus de rede, volume e energia seguem o mesmo visual plano estilo Xbox One das demais telas
-- Perfil, relógio e bateria (notebooks e portáteis) na barra superior; dicas de botões do controle no rodapé
+- Perfil, relógio e bateria (notebooks e portáteis) na barra superior; dicas de botões do controle no rodapé (A, B, X, Y, Start = detalhes, Select = energia)
 - O jogo em destaque se atualiza sozinho quando você joga, instala ou desinstala algo
 
 **Biblioteca ("My games & apps")**
@@ -38,11 +38,11 @@ Os instaladores não exigem .NET instalado. Como gerar o instalador a partir do 
 - **Ordenação**: `RT` no controle (ou `F2`, ou um clique no botão *Sort*) alterna entre Recentes, A–Z e Tamanho em disco; a escolha fica salva
 - **Favoritos**: `X` no controle (ou `F`) marca ou desmarca o jogo
 - **Capas automáticas**: se a Steam ainda não guardou a capa ou o fundo de um jogo, o LiteLauncher baixa a arte da loja da Steam e guarda em `%APPDATA%\LiteLauncher\covers` (a Epic não oferece arte pública; esses jogos continuam com a letra)
-- Busca: comece a digitar, `Ctrl+F` ou `Y` no controle (abre também o teclado virtual do Windows)
+- Busca: comece a digitar, `Ctrl+F` ou `Y` no controle. No controle, `Y` abre o teclado do Windows, `Start` confirma a busca e `B` fecha o teclado (um segundo `B` fecha a busca)
 
 **Tela de abertura do jogo (overlay)**
 - Cartão com a capa e contagem de 3 segundos; `B` ou `Esc` cancela
-- Durante o jogo ele vira a tela **Jogando agora**: tempo da sessão, botão **Back to game** (traz a janela do jogo para a frente) e o fechamento forçado. Quando você fecha o jogo, o LiteLauncher volta à frente na tela inicial
+- Durante o jogo ele vira a tela **Jogando agora**: tempo da sessão, botão **Back to game** (traz a janela do jogo para a frente) e o fechamento forçado. Quando você fecha o jogo, o LiteLauncher volta à frente na tela inicial. O botão **Home** (ou `B`) esconde o overlay e deixa um atalho com o nome do jogo na barra superior: `Seta para cima` até ele e `A` trazem o overlay de volta. Assim você usa o launcher (e, no futuro, outros apps) com o jogo aberto
 - **Fechamento forçado**: botão *Force close game* (aperte duas vezes para confirmar). Encerra os processos da pasta do jogo e volta ao início, útil quando o jogo trava ou não abre. Com o jogo em tela cheia, segure **Select + Start** por 1,5 s para trazer o launcher de volta. Jogos com anti-cheat podem recusar o encerramento; nesse caso use o Gerenciador de Tarefas
 
 **Menu do jogo** (`Start` no controle, tecla Menu ou botão direito)
@@ -62,14 +62,15 @@ Os instaladores não exigem .NET instalado. Como gerar o instalador a partir do 
 - **Energia** (ou `Select` / `F9`): Suspender, Reiniciar e Desligar, com confirmação nos dois últimos
 
 **Launchers**
-- Mostra Steam e Epic com a quantidade de jogos instalados. Ao escolher, o cliente abre (Steam na biblioteca) e o LiteLauncher minimiza para ele aparecer
+- Mostra Steam e Epic com a quantidade de jogos instalados. Ao escolher, o cliente abre (Steam na biblioteca) e o LiteLauncher minimiza para ele aparecer.
+- Ao jogar, a Steam e a Epic são abertas em segundo plano e minimizadas (se ainda não estiverem abertas), para que o LiteLauncher volte à frente quando o jogo fechar
 
 **Configurações**
 - **Som**: volume do sistema e sons de navegação
 - **Tema**: cor de destaque, cor de fundo, arte do jogo no fundo (mostrar imagem inteira ou preencher), escurecimento
 - **Perfil**: nome, avatar pronto ou foto do seu PC (a Steam não é alterada)
 - **Conta Steam**: login oficial pela Steam (OpenID) ou reutilizar a conta do cliente
-- **Geral**: iniciar em tela cheia, **iniciar junto com o Windows**, verificar atualizações e reler a biblioteca
+- **Geral**: **idioma** (English, Português do Brasil e Español; na primeira vez segue o idioma do Windows), iniciar em tela cheia, **iniciar junto com o Windows**, verificar atualizações e reler a biblioteca
 
 **Atualizações**
 - Ao abrir (no máximo uma vez por dia) o LiteLauncher consulta a última versão publicada em Releases e avisa se houver uma nova; em Configurações → Geral o botão abre a página de download. Nada é baixado nem instalado sozinho. Funciona nas versões geradas pelo fluxo de Release do GitHub (o endereço do repositório e o número da versão entram no programa nessa hora); builds locais de desenvolvimento não consultam
@@ -81,48 +82,6 @@ Configurações ficam em `%APPDATA%\LiteLauncher\settings.json`. Se algo der err
 ## Sobre o "Entrar com a Steam"
 
 Usa o login oficial da Steam (OpenID 2.0): o navegador abre `steamcommunity.com`, você entra normalmente (com Steam Guard), a Steam devolve a resposta a um ouvinte local temporário em `127.0.0.1`, o LiteLauncher pede à Steam para validá-la e só então guarda seu **SteamID64 público**. Senha e tokens nunca passam pelo programa. Perfis **privados** não expõem nome nem foto.
-
-## Compilar e gerar o instalador
-
-Requisitos: Windows 10/11, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) e, para o instalador, [Inno Setup 6](https://jrsoftware.org/isinfo.php).
-
-```powershell
-dotnet run --project src/LiteLauncher.App          # executar
-dotnet test                                         # testes
-powershell -ExecutionPolicy Bypass -File build\publish.ps1   # LiteLauncher.exe + instalador
-```
-
-O GitHub também gera o instalador sozinho: ao publicar uma tag como `v1.0.0`, o fluxo `.github/workflows/release.yml` compila, testa e anexa `LiteLauncher-Setup.exe` e o zip portátil à página de Releases. Passo a passo em [docs/COMO-GERAR-O-EXE.pt-BR.md](docs/COMO-GERAR-O-EXE.pt-BR.md).
-
-**Modo Xbox do Windows 11 (MSIX)**: no Windows 11 24H2 ou superior, o LiteLauncher pode ser escolhido como app inicial em *Configurações > Jogos > Modo Xbox* usando um pacote MSIX com o recurso `windows.gamingApp`. A Microsoft só assina essa capacidade para parceiros, por isso o caminho é o modo desenvolvedor, o mesmo usado por projetos da comunidade como [Playnite-FSE-Launcher](https://github.com/leeson865/Playnite-FSE-Launcher) e [AnyFSE](https://github.com/ashpynov/AnyFSE):
-
-```powershell
-powershell -ExecutionPolicy Bypass -File build\publish.ps1
-powershell -ExecutionPolicy Bypass -File packaging\build-msix.ps1   # precisa do SDK do Windows 11
-powershell -ExecutionPolicy Bypass -File packaging\install-fse.ps1  # PowerShell como ADMINISTRADOR
-```
-
-`packaging\uninstall-fse.ps1` remove tudo. Não é um recurso oficial da Microsoft e uma atualização do Windows pode alterá-lo. A opção "Modo Xbox" do instalador comum é diferente: só liga a chave do Windows, com o app Xbox como tela inicial.
-
-## Estrutura do projeto
-
-```
-src/LiteLauncher.Core        Biblioteca portátil (compila e testa também em Linux/macOS)
-  Game.cs, IGameProvider.cs    Modelo e interface que cada loja implementa
-  Settings/                    Configurações (arquivo JSON gravado com segurança)
-  Steam/                       Leitor de .vdf/.acf, biblioteca, capas, conta, OpenID, amigos
-  Epic/                        Leitor dos manifestos da Epic
-  Achievements.cs              Conquistas (página da comunidade e Web API)
-  ProcessScope.cs              Regras de segurança do fechamento forçado
-src/LiteLauncher.App         Interface WPF
-  MainWindow.*.cs              Início, biblioteca, filtros, overlay, menu do jogo, amigos, energia...
-  GameProcessKiller.cs         Encerra os processos do jogo
-  Gamepad.cs                   Leitura do controle (XInput)
-tests/LiteLauncher.Core.Tests  Testes xunit
-build/, installer/, packaging/ Scripts do .exe, instalador Inno Setup e MSIX
-```
-
-Para adicionar outra loja, implemente `IGameProvider` em `LiteLauncher.Core` e registre em `_providers` (`MainWindow.xaml.cs`).
 
 ## Roadmap
 
@@ -137,6 +96,7 @@ Para adicionar outra loja, implemente `IGameProvider` em `LiteLauncher.Core` e r
 - [x] Download de capas ausentes (Steam)
 - [x] Ordenação e aba Recentes
 - [x] Controles PlayStation, Switch e DirectInput
+- [x] Idiomas: Português (Brasil) e Espanhol (traduções feitas por máquina; correções são bem-vindas em `src/LiteLauncher.Core/Translations.cs`)
 
 ## Avisos
 

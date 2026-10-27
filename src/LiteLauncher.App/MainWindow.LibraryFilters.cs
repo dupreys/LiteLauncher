@@ -45,7 +45,7 @@ public partial class MainWindow
 
         foreach (var (filter, label) in FilterTabs)
         {
-            var text = new TextBlock { Text = label, FontSize = 15, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
+            var text = new TextBlock { Text = Loc.T(label), FontSize = 15, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
             var chip = new Border
             {
                 Tag = filter,
@@ -88,9 +88,9 @@ public partial class MainWindow
 
     private string SortLabel() => _sort switch
     {
-        LibrarySort.Name => "Sort: A–Z",
-        LibrarySort.Size => "Sort: Size",
-        _ => "Sort: Recent",
+        LibrarySort.Name => Loc.T("Sort: A–Z"),
+        LibrarySort.Size => Loc.T("Sort: Size"),
+        _ => Loc.T("Sort: Recent"),
     };
 
     private void CycleSort()
@@ -235,13 +235,13 @@ public partial class MainWindow
         if (favourites.Remove(key))
         {
             item.IsFavorite = false;
-            ShowToast($"{item.Name} removed from favourites");
+            ShowToast(Loc.F("{0} removed from favourites", item.Name));
         }
         else
         {
             favourites.Add(key);
             item.IsFavorite = true;
-            ShowToast($"{item.Name} added to favourites");
+            ShowToast(Loc.F("{0} added to favourites", item.Name));
         }
 
         QueueSave();

@@ -62,7 +62,7 @@ public partial class MainWindow
         _gridKind = kind;
         foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = k == kind ? FontWeights.Bold : FontWeights.Normal;
         GridResults.Children.Clear();
-        GridStatus.Text = "Searching SteamGridDB…";
+        GridStatus.Text = Loc.T("Searching SteamGridDB…");
         System.Windows.Input.Keyboard.Focus(TabFor(kind));
 
         try
@@ -73,25 +73,25 @@ public partial class MainWindow
             if (cts.IsCancellationRequested) return;
             if (gameId is null)
             {
-                GridStatus.Text = "This game was not found on SteamGridDB.";
+                GridStatus.Text = Loc.T("This game was not found on SteamGridDB.");
                 return;
             }
 
             var images = await SteamGridDb.GetImagesAsync(Http, apiKey, gameId.Value, kind, cts.Token);
             if (cts.IsCancellationRequested) return;
             GridStatus.Text = images.Count == 0
-                ? $"No {KindName(kind)} on SteamGridDB for this game yet."
-                : $"{images.Count} {KindName(kind)} · pick one to use it";
+                ? Loc.F("No {0} on SteamGridDB for this game yet.", Loc.T(KindName(kind)))
+                : Loc.F("{0} {1} · pick one to use it", images.Count, Loc.T(KindName(kind)));
 
             foreach (var image in images.Take(60)) GridResults.Children.Add(MakeArtButton(image, kind));
         }
         catch (UnauthorizedAccessException)
         {
-            GridStatus.Text = "SteamGridDB rejected the API key. Check it in Settings → Integrations.";
+            GridStatus.Text = Loc.T("SteamGridDB rejected the API key. Check it in Settings → Integrations.");
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            if (!cts.IsCancellationRequested) GridStatus.Text = "Could not reach SteamGridDB. Check your internet connection.";
+            if (!cts.IsCancellationRequested) GridStatus.Text = Loc.T("Could not reach SteamGridDB. Check your internet connection.");
         }
     }
 
@@ -131,7 +131,7 @@ public partial class MainWindow
     private async Task ApplyGridArtAsync(ArtImage art, ArtKind kind)
     {
         if (_detailsKey is null) return;
-        GridStatus.Text = "Downloading…";
+        GridStatus.Text = Loc.T("Downloading…");
 
         var extension = Path.GetExtension(new Uri(art.Url).AbsolutePath);
         if (extension.Length is 0 or > 5) extension = ".png";
@@ -148,14 +148,14 @@ public partial class MainWindow
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException)
         {
-            GridStatus.Text = "The download failed. Try another picture.";
+            GridStatus.Text = Loc.T("The download failed. Try another picture.");
             return;
         }
 
         if (await ImageLoader.LoadAsync(destination, decodeWidth: 64) is null)
         {
             DeleteQuietly(destination);
-            GridStatus.Text = "That picture format is not supported here. Try another one.";
+            GridStatus.Text = Loc.T("That picture format is not supported here. Try another one.");
             return;
         }
 
@@ -173,7 +173,17 @@ public partial class MainWindow
             }
         });
         DeleteQuietly(old);
-        GridStatus.Text = $"{kind} applied. Pick another, or press B to go back.";
-        ShowToast($"{kind} updated from SteamGridDB");
+        GridStatus.Text = kind switch
+        {
+            ArtKind.Cover => Loc.T("Cover applied. Pick another, or press B to go back."),
+            ArtKind.Background => Loc.T("Background applied. Pick another, or press B to go back."),
+            _ => Loc.T("Logo applied. Pick another, or press B to go back."),
+        };
+        ShowToast(kind switch
+        {
+            ArtKind.Cover => "Cover updated from SteamGridDB",
+            ArtKind.Background => "Background updated from SteamGridDB",
+            _ => "Logo updated from SteamGridDB",
+        });
     }
 }

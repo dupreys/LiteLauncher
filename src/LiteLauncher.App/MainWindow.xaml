@@ -99,12 +99,21 @@
         <Image x:Name="BackdropA" Stretch="UniformToFill" Opacity="0" IsHitTestVisible="False"/>
         <Image x:Name="BackdropB" Stretch="UniformToFill" Opacity="0" IsHitTestVisible="False"/>
         <Rectangle x:Name="DimOverlay" Fill="Black" Opacity="0.35" IsHitTestVisible="False"/>
-        <Rectangle IsHitTestVisible="False" Opacity="0.92">
+        <Rectangle x:Name="BottomShade" IsHitTestVisible="False" Opacity="0.92">
             <Rectangle.Fill>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                     <GradientStop Color="Transparent" Offset="0.45"/>
                     <GradientStop Color="{DynamicResource BgColor}" Offset="1"/>
                 </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+        <!-- Soft shadow in the corners, like the Xbox home -->
+        <Rectangle IsHitTestVisible="False">
+            <Rectangle.Fill>
+                <RadialGradientBrush Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.78" RadiusY="0.78">
+                    <GradientStop Color="#00000000" Offset="0.5"/>
+                    <GradientStop Color="#AA000000" Offset="1"/>
+                </RadialGradientBrush>
             </Rectangle.Fill>
         </Rectangle>
 
@@ -138,6 +147,16 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" KeyboardNavigation.DirectionalNavigation="Contained">
+                        <!-- Game running with the overlay tucked away: D-pad Up from the top row, then A brings the overlay back -->
+                        <Button x:Name="NowPlayingChip" Style="{StaticResource IconButton}" Width="Auto" MinWidth="40" Margin="0,0,10,0"
+                                Visibility="Collapsed" Click="OnNowPlayingClick">
+                            <StackPanel Orientation="Horizontal" Margin="14,0,16,0">
+                                <TextBlock Text="&#xE7FC;" FontFamily="Segoe MDL2 Assets" FontSize="18" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource Accent}"/>
+                                <TextBlock x:Name="NowPlayingText" FontSize="14" Margin="10,0,0,0" MaxWidth="240" TextTrimming="CharacterEllipsis"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <!-- Network: Wi-Fi, Ethernet or offline -->
                         <Button x:Name="NetworkButton" Style="{StaticResource IconButton}" Margin="0,0,6,0" Click="OnNetworkClick">
                             <Grid x:Name="NetworkIcon" Width="24" Height="24">
@@ -307,10 +326,10 @@
                                      ToolTip="Search installed games (Ctrl+F)" TextChanged="OnSearchChanged"/>
                             <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16"
                                        Foreground="{DynamicResource TextMuted}" IsHitTestVisible="False"
-                                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                                       HorizontalAlignment="Left" VerticalAlignment="Center" Margin="13,0,0,0"/>
                             <TextBlock x:Name="SearchHint" Text="Search installed games" IsHitTestVisible="False"
                                        Foreground="{DynamicResource TextMuted}" FontSize="16"
-                                       VerticalAlignment="Center" Margin="43,0,12,0"/>
+                                       VerticalAlignment="Center" Margin="40,0,12,0"/>
                         </Grid>
                     </Grid>
 
@@ -404,7 +423,10 @@
                                 <ToggleButton x:Name="ShowBackdropToggle" Content="Show game art in the background"
                                               Style="{StaticResource XToggle}" Margin="0,16,0,0"
                                               Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
-                                <ToggleButton x:Name="FitBackdropToggle" Content="Show the whole image (no cropping)"
+                                <ToggleButton x:Name="FullBackdropToggle" Content="Wallpaper over the whole screen (Xbox style)"
+                                              Style="{StaticResource XToggle}" Margin="0,8,0,0"
+                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
+                                <ToggleButton x:Name="FitBackdropToggle" Content="Bottom fade style: show the whole image (no cropping)"
                                               Style="{StaticResource XToggle}" Margin="0,8,0,0"
                                               Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
                                 <TextBlock Text="Background darkness" Style="{StaticResource FieldLabel}"/>
@@ -537,6 +559,9 @@
                                               Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
                                 <Button x:Name="UpdateButton" Style="{StaticResource ActionButton}" Click="OnUpdateButtonClick">
                                     <TextBlock x:Name="UpdateLabel" Text="Check for updates now"/>
+                                </Button>
+                                <Button x:Name="LanguageButton" Style="{StaticResource ActionButton}" Click="OnLanguageClick">
+                                    <TextBlock x:Name="LanguageLabel"/>
                                 </Button>
                                 <Button x:Name="RescanButton" Style="{StaticResource ActionButton}" Click="OnRescanClick">
                                     <TextBlock Text="Rescan game library"/>
@@ -716,21 +741,21 @@
                                     </Grid.RowDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="STEAMGRIDDB" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
-                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                            <Button x:Name="GridTabCover" Style="{StaticResource XboxButton}" Height="42" Width="150"
+                                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                            <Button x:Name="GridTabCover" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Tag="Cover" Click="OnGridTabClick"><TextBlock Text="Covers"/></Button>
-                                            <Button x:Name="GridTabBackground" Style="{StaticResource XboxButton}" Height="42" Width="150"
+                                            <Button x:Name="GridTabBackground" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Margin="10,0,0,0" Tag="Background" Click="OnGridTabClick"><TextBlock Text="Backgrounds"/></Button>
-                                            <Button x:Name="GridTabLogo" Style="{StaticResource XboxButton}" Height="42" Width="150"
+                                            <Button x:Name="GridTabLogo" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Margin="10,0,0,0" Tag="Logo" Click="OnGridTabClick"><TextBlock Text="Logos"/></Button>
-                                            <Button Style="{StaticResource XboxButton}" Height="42" Width="110"
+                                            <Button Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="120"
                                                     Margin="10,0,0,0" Click="OnGridCloseClick"><TextBlock Text="Back"/></Button>
                                         </StackPanel>
-                                        <TextBlock x:Name="GridStatus" Margin="0,12,0,10" FontSize="13" TextWrapping="Wrap"
+                                        <TextBlock x:Name="GridStatus" Margin="0,14,0,14" FontSize="13" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextMuted}"/>
                                     </StackPanel>
                                     <ScrollViewer x:Name="GridScroll" Grid.Row="1" VerticalScrollBarVisibility="Hidden" Focusable="False">
-                                        <WrapPanel x:Name="GridResults"/>
+                                        <WrapPanel x:Name="GridResults" Margin="10,12,10,12"/>
                                     </ScrollViewer>
                                 </Grid>
                             </Border>
@@ -756,7 +781,7 @@
                                             <Border Grid.ColumnSpan="2" Background="#33FFFFFF"/>
                                             <Border Grid.Column="0" Background="{DynamicResource Accent}"/>
                                         </Grid>
-                                        <Button x:Name="AchievementsBackButton" Style="{StaticResource XboxButton}" Height="42" Width="110"
+                                        <Button x:Name="AchievementsBackButton" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="120"
                                                 HorizontalAlignment="Left" Click="OnAchievementsCloseClick">
                                             <TextBlock Text="Back"/>
                                         </Button>
@@ -1026,12 +1051,16 @@
                                        Foreground="{DynamicResource TextMuted}"/>
                             <StackPanel Orientation="Horizontal" Margin="0,30,0,0">
                                 <Button x:Name="OverlayCancelButton" Style="{StaticResource XboxButton}"
-                                        Click="OnOverlayCancelClick">
+                                        Margin="0,0,12,0" Click="OnOverlayCancelClick">
                                     <TextBlock x:Name="OverlayCancelLabel" Text="B   ✕  Cancel launch"/>
                                 </Button>
                                 <Button x:Name="OverlayResumeButton" Style="{StaticResource XboxPrimary}"
                                         Margin="0,0,12,0" Visibility="Collapsed" Click="OnOverlayResumeClick">
                                     <TextBlock Text="A   ▶  Back to game"/>
+                                </Button>
+                                <Button x:Name="OverlayHomeButton" Style="{StaticResource XboxButton}"
+                                        Margin="0,0,0,0" Visibility="Collapsed" Click="OnOverlayHomeClick">
+                                    <TextBlock x:Name="OverlayHomeLabel" Text="⌂  Home"/>
                                 </Button>
                                 <Button x:Name="OverlayForceButton" Style="{StaticResource XboxButton}"
                                         Margin="12,0,0,0" Visibility="Collapsed" Click="OnOverlayForceClick">
