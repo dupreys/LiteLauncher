@@ -37,7 +37,7 @@ public static class UpdateChecker
             var url = Text(root, "html_url");
             var version = ParseVersion(tag);
             if (version is null || tag is null || url is null) return null;
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return null;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || uri.Host != "github.com") return null; // only ever open a github.com page
             return new UpdateInfo(version, tag, url);
         }
         catch (JsonException)

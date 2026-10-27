@@ -147,8 +147,8 @@ public sealed class EpicProvider : IGameProvider
     public static string LaunchUri(Game game)
     {
         var id = game.CatalogNamespace is not null && game.CatalogItemId is not null
-            ? $"{game.CatalogNamespace}%3A{game.CatalogItemId}%3A{game.Id}"
-            : game.Id;
+            ? $"{Uri.EscapeDataString(game.CatalogNamespace)}%3A{Uri.EscapeDataString(game.CatalogItemId)}%3A{Uri.EscapeDataString(game.Id)}"
+            : Uri.EscapeDataString(game.Id);
         return $"com.epicgames.launcher://apps/{id}?action=launch&silent=true";
     }
 }

@@ -34,6 +34,7 @@ public class UpdateCheckerTests
     [InlineData("""{"tag_name":"v1.4.0","html_url":"https://x/y","draft":true}""")]
     [InlineData("""{"tag_name":"v1.4.0","html_url":"https://x/y","prerelease":true}""")]
     [InlineData("""{"tag_name":"v1.4.0","html_url":"http://insecure/y"}""")]
+    [InlineData("""{"tag_name":"v1.4.0","html_url":"https://evil.example/releases/v1.4.0"}""")]
     [InlineData("""{"tag_name":"v1.4.0"}""")]
     [InlineData("not json")]
     [InlineData("[]")]

@@ -29,7 +29,6 @@ CloseApplications=yes
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"
 Name: "startup"; Description: "Start LiteLauncher full screen when I sign in to Windows"; GroupDescription: "Console mode:"; Flags: unchecked
-Name: "xboxmode"; Description: "Turn on Windows Xbox mode (Windows 11 24H2 or later). Note: Windows will use the Xbox app as its home screen."; GroupDescription: "Console mode:"; Flags: unchecked; Check: XboxModeAvailable
 
 [Files]
 Source: "..\publish\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
@@ -43,23 +42,6 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 ; Start with Windows (current user), full screen
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "{#AppName}"; \
     ValueData: """{app}\{#AppExe}"" --fullscreen"; Tasks: startup; Flags: uninsdeletevalue
-; Xbox mode on: the value Windows' own "Enable Xbox mode" switch writes (Settings > Gaming > Xbox mode).
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\GamingConfiguration"; ValueType: string; \
-    ValueName: "GamingHomeApp"; ValueData: "Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App"; Tasks: xboxmode
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Start {#AppName}"; Flags: nowait postinstall skipifsilent
-
-[Code]
-// Offer "Xbox mode" only on Windows 11 24H2 (build 26100) or later, and only when no home app is chosen yet:
-// if Xbox mode is already on (the Xbox app, or LiteLauncher installed as the home app), leave the choice alone.
-function XboxModeAvailable: Boolean;
-var
-  Version: TWindowsVersion;
-  HomeApp: String;
-begin
-  GetWindowsVersionEx(Version);
-  Result := (Version.Major = 10) and (Version.Build >= 26100);
-  if Result and RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\GamingConfiguration', 'GamingHomeApp', HomeApp) then
-    Result := Trim(HomeApp) = '';
-end;

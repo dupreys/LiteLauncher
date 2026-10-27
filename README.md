@@ -22,6 +22,19 @@ Inspirado em [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMo
 
 Não precisa ter o .NET instalado.
 
+## Modo Xbox do Windows (tela cheia)
+
+O LiteLauncher é um programa comum e **não aparece sozinho** na lista de *Configurações → Jogos → Modo Xbox*: o Windows só lista ali apps empacotados com uma permissão especial de "aplicativo de jogos", que a Microsoft não libera para projetos independentes.
+
+Para usar o LiteLauncher nesse modo é necessário o [**AnyFSE**](https://github.com/ashpynov/AnyFSE), um projeto de terceiros (sem vínculo com o LiteLauncher). Ele aparece na lista do Windows como aplicativo inicial, abre o launcher que você escolher e some. Resumo:
+
+1. O Windows precisa estar com o Modo Xbox (Full Screen Experience) habilitado. O AnyFSE não o liga sozinho.
+2. Instale o AnyFSE seguindo as instruções do projeto (precisa de administrador).
+3. Abra o AnyFSE, clique com o botão direito e escolha **Configure**. Indique o executável do LiteLauncher (`LiteLauncher.exe`, normalmente em `%LOCALAPPDATA%\Programs\LiteLauncher`) como launcher personalizado. Use o argumento `--fullscreen` se o campo de argumentos existir.
+4. Em *Configurações → Jogos → Modo Xbox*, escolha o **AnyFSE** como aplicativo inicial.
+
+Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações e a observação do autor sobre antivírus que podem marcar o AnyFSE como falso positivo estão na página dele.
+
 ## Recursos
 
 **Tela inicial estilo Xbox**
