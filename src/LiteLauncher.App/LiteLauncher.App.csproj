@@ -10,7 +10,14 @@
     <AssemblyName>LiteLauncher</AssemblyName>
     <ApplicationIcon>Assets\LiteLauncher.ico</ApplicationIcon>
     <TieredPGO>true</TieredPGO>
+    <!-- Local builds are 0.0.0; the release workflow passes -p:Version=<tag> and -p:GitHubRepo=<owner/name>. -->
+    <Version>0.0.0</Version>
+    <GitHubRepo></GitHubRepo>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="GitHubRepo" Value="$(GitHubRepo)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LiteLauncher.Core\LiteLauncher.Core.csproj" />

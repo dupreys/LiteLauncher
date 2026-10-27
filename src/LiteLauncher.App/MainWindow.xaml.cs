@@ -59,7 +59,7 @@ public partial class MainWindow : Window
         _providers = new IGameProvider[] { new SteamProvider(_steamPath), new LiteLauncher.Core.Epic.EpicProvider() };
 
         _view = CollectionViewSource.GetDefaultView(_items);
-        _view.Filter = o => o is GameItem g && MatchesSearch(g);
+        _view.Filter = o => o is GameItem g && MatchesFilter(g) && MatchesSearch(g);
         GameGrid.ItemsSource = _view;
 
         _gamepad.ButtonPressed += OnGamepad;
@@ -69,6 +69,7 @@ public partial class MainWindow : Window
         _clock.Tick += (_, _) => UpdateClock();
         _clock.Start();
         InitStatusIcons();
+        BuildFilterBar();
 
         _refreshDebounce.Tick += async (_, _) =>
         {
@@ -141,6 +142,7 @@ public partial class MainWindow : Window
         await RefreshAsync();
         StartLiveUpdates();
         _ = LoadSavedAvatarAsync();
+        _ = AutoCheckForUpdateAsync();
     }
 
     // ---- Library -------------------------------------------------------------------
@@ -167,9 +169,10 @@ public partial class MainWindow : Window
 
                 // The user's names and pictures (Manage in the game menu) win over the store's.
                 for (var i = 0; i < games.Count; i++)
-                    games[i] = PlayTracker.Apply(GameOverrides.Apply(games[i], App.Settings.GameOverrides), App.Settings.PlayRecords);
+                    games[i] = WithCachedArt(PlayTracker.Apply(GameOverrides.Apply(games[i], App.Settings.GameOverrides), App.Settings.PlayRecords));
 
                 ApplyGames(games);
+                _ = DownloadMissingArtAsync(games);
             }
             while (_refreshAgain);
         }
@@ -390,12 +393,21 @@ public partial class MainWindow : Window
     {
         var shown = _view.Cast<object>().Count();
         var query = SearchBox.Text.Trim();
-        var filtering = query.Length > 0;
+        var filtering = query.Length > 0 || _filter != LibraryFilter.Installed;
 
         CountText.Text = filtering ? $"{shown} of {_items.Count} games" : $"{_items.Count} games";
 
-        NoResultsText.Visibility = filtering && shown == 0 ? Visibility.Visible : Visibility.Collapsed;
-        NoResultsText.Text = $"No installed game matches \"{query}\".";
+        NoResultsText.Visibility = shown == 0 ? Visibility.Visible : Visibility.Collapsed;
+        NoResultsText.Text = query.Length > 0
+            ? $"No game here matches \"{query}\"."
+            : _filter switch
+            {
+                LibraryFilter.Recent => "Nothing played yet. Games you play show up here.",
+                LibraryFilter.Favorites => "No favourites yet. Press X on a game to add it here.",
+                LibraryFilter.Steam => "No installed Steam games.",
+                LibraryFilter.Epic => "No installed Epic games.",
+                _ => "No installed games found.",
+            };
     }
 
     /// <summary>Moves focus from the search box to the first result.</summary>
@@ -679,6 +691,9 @@ public partial class MainWindow : Window
                 break;
             case AppView.Library:
                 AddHint("A", "Play");
+                AddHint("X", "Favourite");
+                AddHint("LB", "Prev filter");
+                AddHint("RB", "Next filter");
                 AddHint("Y", "Search");
                 AddHint("B", "Back");
                 break;
@@ -695,8 +710,9 @@ public partial class MainWindow : Window
 
         HintBar.Children.Add(new Border
         {
-            Width = 26,
+            MinWidth = 26,
             Height = 26,
+            Padding = new Thickness(5, 0, 5, 0),
             CornerRadius = new CornerRadius(13),
             Margin = new Thickness(0, 0, 8, 0),
             Background = new SolidColorBrush(ThemeManager.Parse(colour, Colors.Gray)),
@@ -895,6 +911,12 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (HandleLibraryKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (e.Key == Key.Apps && GameFromElement(Keyboard.FocusedElement) is { } menuItem)
         {
             OpenGameDetails(menuItem);
@@ -961,6 +983,7 @@ public partial class MainWindow : Window
         if (HandleDetailsGamepad(button)) return;
         if (HandleFriendsGamepad(button)) return;
         if (HandleLaunchersGamepad(button)) return;
+        if (HandleLibraryGamepad(button)) return;
         if (button == GamepadButton.A && Keyboard.FocusedElement is TextBox box && (box == SteamApiKeyBox || box == GridDbKeyBox))
         {
             ToggleNameKeyboard();

@@ -16,6 +16,7 @@ public partial class MainWindow
     private enum OverlayPhase { None, Countdown, Starting, Playing }
 
     private const double CountdownSeconds = 3;
+    private const double OverlayBarWidth = 520; // keep equal to the progress track width in the XAML
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(120);
 
     private readonly DispatcherTimer _overlayTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
@@ -77,6 +78,9 @@ public partial class MainWindow
 
         OverlayCancelButton.Visibility = OverlayCancelable ? Visibility.Visible : Visibility.Collapsed;
         OverlayForceButton.Visibility = OverlayForceable ? Visibility.Visible : Visibility.Collapsed;
+        OverlayResumeButton.Visibility = phase == OverlayPhase.Playing ? Visibility.Visible : Visibility.Collapsed;
+        if (_overlayItem is { } shown)
+            OverlaySource.Text = (phase == OverlayPhase.Playing ? "NOW PLAYING" : "LITELAUNCHER") + $" · {shown.Game.Source.ToUpperInvariant()}";
         DisarmForce();
         switch (phase)
         {
@@ -90,13 +94,13 @@ public partial class MainWindow
                 OverlayCancelLabel.Text = "B   ✕  Close";
                 break;
             case OverlayPhase.Playing:
-                OverlayHint.Text = "LiteLauncher returns to Home when you close the game. Hold Select + Start on the controller to come back here.";
-                OverlayProgress.Width = 240;
+                OverlayHint.Text = "Press A to go back to the game. LiteLauncher returns to Home when you close it. With the game in front, hold Select + Start on the controller to come back here.";
+                OverlayProgress.Width = OverlayBarWidth;
                 break;
         }
 
         // The Cancel button disappears in Playing; keep focus on a button that is still there.
-        if (phase == OverlayPhase.Playing && IsActive) Keyboard.Focus(OverlayForceButton);
+        if (phase == OverlayPhase.Playing && IsActive) Keyboard.Focus(OverlayResumeButton);
     }
 
     private void OnOverlayTick()
@@ -107,7 +111,7 @@ public partial class MainWindow
             case OverlayPhase.Countdown:
                 var left = Math.Max(0, CountdownSeconds - elapsed.TotalSeconds);
                 OverlayStatus.Text = $"Game starts in {Math.Ceiling(left):0} sec.";
-                OverlayProgress.Width = 240 * Math.Min(1, elapsed.TotalSeconds / CountdownSeconds);
+                OverlayProgress.Width = OverlayBarWidth * Math.Min(1, elapsed.TotalSeconds / CountdownSeconds);
                 if (left <= 0)
                 {
                     if (_overlayItem is not null && StartGameNow(_overlayItem)) SetOverlayPhase(OverlayPhase.Starting);
@@ -117,7 +121,7 @@ public partial class MainWindow
 
             case OverlayPhase.Starting:
                 // Indeterminate: a short bar sweeping back and forth.
-                OverlayProgress.Width = 60 + 180 * Math.Abs(Math.Sin(elapsed.TotalSeconds * 1.5));
+                OverlayProgress.Width = OverlayBarWidth * (0.25 + 0.75 * Math.Abs(Math.Sin(elapsed.TotalSeconds * 1.5)));
                 if (elapsed > StartTimeout)
                 {
                     CloseLaunchOverlay(returnHome: false);
@@ -258,7 +262,18 @@ public partial class MainWindow
     {
         if (!OverlayForceable) return;
         BringLauncherToFront();
-        Keyboard.Focus(OverlayForceButton);
+        Keyboard.Focus(_overlayPhase == OverlayPhase.Playing ? OverlayResumeButton : OverlayForceButton);
+    }
+
+    private void OnOverlayResumeClick(object sender, RoutedEventArgs e)
+    {
+        if (_overlayItem is not { } item || _overlayPhase != OverlayPhase.Playing) return;
+
+        if (GameProcessKiller.BringToFront(item.Game)) return;
+
+        // No window of its own to bring forward (some games hide it): asking Steam to start it again just focuses it.
+        if (item.Game.Source == "Steam" && OpenSteamUrl($"steam://rungameid/{item.Game.Id}")) return;
+        ShowToast("Could not find the game window. Use Alt+Tab to switch to it.");
     }
 
     /// <summary>While the overlay is up it owns the keyboard: Esc/Backspace/Enter cancel, everything else is ignored.</summary>

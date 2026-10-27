@@ -278,7 +278,7 @@ public partial class MainWindow
 
         var row = new Button
         {
-            Style = (Style)FindResource("MenuRow"),
+            Style = (Style)FindResource("XboxRow"),
             Content = layout,
             Tag = network,
             FontSize = 16,

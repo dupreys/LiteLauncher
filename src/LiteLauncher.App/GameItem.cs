@@ -11,11 +11,30 @@ public sealed class GameItem : INotifyPropertyChanged
 {
     private ImageSource? _cover;
 
-    public GameItem(Game game) => Game = game;
+    private bool _isFavorite;
+
+    public GameItem(Game game)
+    {
+        Game = game;
+        _isFavorite = App.Settings.Favorites.Contains(GameSorter.Key(game));
+    }
+
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            if (_isFavorite == value) return;
+            _isFavorite = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFavorite)));
+        }
+    }
 
     public Game Game { get; }
 
     public string Name => Game.Name;
+
+    public long SizeOnDisk => Game.SizeOnDisk;
 
     public string Initial => Game.Name.Length > 0 ? Game.Name[..1].ToUpperInvariant() : "?";
 

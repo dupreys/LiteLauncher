@@ -70,6 +70,7 @@ public partial class MainWindow
         UiSoundsToggle.IsChecked = settings.UiSounds;
         UiVolumeSlider.Value = settings.UiVolume * 100;
         FullscreenToggle.IsChecked = settings.StartFullscreen;
+        LoadExtrasUi();
         NameBox.Text = settings.CustomName ?? string.Empty;
         SteamApiKeyBox.Text = settings.SteamWebApiKey ?? string.Empty;
         GridDbKeyBox.Text = settings.SteamGridDbApiKey ?? string.Empty;
@@ -85,7 +86,6 @@ public partial class MainWindow
             MuteToggle.IsEnabled = false;
         }
 
-        VersionText.Text = $"LiteLauncher {typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "dev"}";
 
         ShowSettingsPanel("Sound");
         UpdateSliderTexts();
@@ -174,7 +174,11 @@ public partial class MainWindow
         if (_loadingUi || sender is not ToggleButton toggle) return;
         var on = toggle.IsChecked == true;
 
-        if (ReferenceEquals(toggle, MuteToggle))
+        if (HandleExtrasToggle(toggle, on))
+        {
+            // handled in MainWindow.Extras.cs
+        }
+        else if (ReferenceEquals(toggle, MuteToggle))
         {
             SystemVolume.TrySetMute(on);
         }

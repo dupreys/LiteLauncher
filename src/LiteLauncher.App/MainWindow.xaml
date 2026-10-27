@@ -64,6 +64,22 @@
                            Foreground="{DynamicResource TextMuted}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
+                <TextBlock Text="★" FontSize="22" Foreground="#F5C518" Margin="0,6,10,0"
+                           HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <TextBlock.Effect>
+                        <DropShadowEffect BlurRadius="6" ShadowDepth="0" Opacity="0.9"/>
+                    </TextBlock.Effect>
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <Border VerticalAlignment="Bottom" Padding="12,22,12,10">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -272,6 +288,7 @@
                 <Grid x:Name="LibraryView" Margin="70,110,70,64" Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -297,7 +314,9 @@
                         </Grid>
                     </Grid>
 
-                    <ListBox x:Name="GameGrid" Grid.Row="1" Focusable="False" Background="Transparent" BorderThickness="0"
+                    <StackPanel x:Name="FilterBar" Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,14"/>
+
+                    <ListBox x:Name="GameGrid" Grid.Row="2" Focusable="False" Background="Transparent" BorderThickness="0"
                              ItemContainerStyle="{StaticResource CardContainer}"
                              ItemTemplate="{StaticResource ArtNamed}"
                              SelectionMode="Single"
@@ -312,7 +331,7 @@
                         </ListBox.ItemsPanel>
                     </ListBox>
 
-                    <TextBlock x:Name="NoResultsText" Grid.Row="1" Visibility="Collapsed" FontSize="20"
+                    <TextBlock x:Name="NoResultsText" Grid.Row="2" Visibility="Collapsed" FontSize="20"
                                Foreground="{DynamicResource TextMuted}" TextWrapping="Wrap"
                                HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8,40,0,0"/>
                 </Grid>
@@ -510,6 +529,15 @@
                                 <ToggleButton x:Name="FullscreenToggle" Content="Start in fullscreen"
                                               Style="{StaticResource XToggle}" Margin="0,4,0,0"
                                               Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
+                                <ToggleButton x:Name="StartWithWindowsToggle" Content="Start with Windows"
+                                              Style="{StaticResource XToggle}" Margin="0,8,0,0"
+                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
+                                <ToggleButton x:Name="UpdateCheckToggle" Content="Check for updates at startup"
+                                              Style="{StaticResource XToggle}" Margin="0,8,0,0"
+                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
+                                <Button x:Name="UpdateButton" Style="{StaticResource ActionButton}" Click="OnUpdateButtonClick">
+                                    <TextBlock x:Name="UpdateLabel" Text="Check for updates now"/>
+                                </Button>
                                 <Button x:Name="RescanButton" Style="{StaticResource ActionButton}" Click="OnRescanClick">
                                     <TextBlock Text="Rescan game library"/>
                                 </Button>
@@ -528,10 +556,9 @@
                 <Grid x:Name="GameDetails" Visibility="Collapsed"
                       KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
                     <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnDetailsDimClick"/>
-                    <Border Margin="60,26,60,26" CornerRadius="16" Background="{DynamicResource Bg}"
-                            BorderBrush="#22FFFFFF" BorderThickness="1" ClipToBounds="True">
-                        <Grid SizeChanged="OnRoundedPanelSizeChanged">
-                            <Image x:Name="DetailsBackdrop" Stretch="UniformToFill" Opacity="0.45" IsHitTestVisible="False"/>
+                    <Border Background="{DynamicResource Bg}" ClipToBounds="True">
+                        <Grid>
+                            <Image x:Name="DetailsBackdrop" Stretch="UniformToFill" Opacity="0.55" IsHitTestVisible="False"/>
                             <Rectangle IsHitTestVisible="False">
                                 <Rectangle.Fill>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
@@ -542,10 +569,10 @@
                                 </Rectangle.Fill>
                             </Rectangle>
 
-                            <Grid Margin="36,40,36,26">
+                            <Grid Margin="72,64,72,44">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="300"/>
+                                    <ColumnDefinition Width="340"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"/>
@@ -558,19 +585,19 @@
                                     <TextBlock x:Name="DetailsSource" FontSize="11" FontWeight="Bold"
                                                Foreground="{DynamicResource Accent}" Margin="0,0,0,14"/>
                                     <StackPanel Orientation="Horizontal">
-                                        <Border Width="70" Height="105" CornerRadius="6" ClipToBounds="True"
+                                        <Border Width="130" Height="195" ClipToBounds="True"
                                                 Background="{DynamicResource Surface}" VerticalAlignment="Top">
                                             <Grid>
-                                                <TextBlock x:Name="DetailsInitial" FontSize="30" FontWeight="SemiBold"
+                                                <TextBlock x:Name="DetailsInitial" FontSize="44" FontWeight="SemiBold"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 <Image x:Name="DetailsCover" Stretch="UniformToFill"/>
                                             </Grid>
                                         </Border>
-                                        <StackPanel Margin="18,0,0,0" VerticalAlignment="Center" MaxWidth="560">
+                                        <StackPanel Margin="26,0,0,0" VerticalAlignment="Center" MaxWidth="560">
                                             <Image x:Name="DetailsLogo" MaxHeight="96" MaxWidth="420" HorizontalAlignment="Left"
                                                    Stretch="Uniform" Visibility="Collapsed"/>
-                                            <TextBlock x:Name="DetailsTitle" FontSize="34" FontWeight="Bold" TextWrapping="Wrap"/>
-                                            <Border HorizontalAlignment="Left" Margin="0,10,0,0" CornerRadius="10" Padding="10,3"
+                                            <TextBlock x:Name="DetailsTitle" FontSize="42" FontWeight="Light" TextWrapping="Wrap"/>
+                                            <Border HorizontalAlignment="Left" Margin="0,12,0,0" Padding="10,3"
                                                     BorderBrush="{DynamicResource Accent}" BorderThickness="1">
                                                 <TextBlock Text="Installed" FontSize="12" Foreground="{DynamicResource Accent}"/>
                                             </Border>
@@ -586,13 +613,13 @@
 
                                 <!-- Right: your numbers -->
                                 <StackPanel Grid.Column="1" Margin="0,40,0,0">
-                                    <Border Style="{StaticResource InfoCard}">
+                                    <Border Style="{StaticResource XboxCard}">
                                         <StackPanel>
                                             <TextBlock Text="YOUR PLAYTIME" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
                                             <TextBlock x:Name="DetailsPlaytime" FontSize="20" FontWeight="SemiBold" Margin="0,4,0,0"/>
                                         </StackPanel>
                                     </Border>
-                                    <Border Style="{StaticResource InfoCard}">
+                                    <Border Style="{StaticResource XboxCard}">
                                         <StackPanel>
                                             <TextBlock Text="ACHIEVEMENTS" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
                                             <TextBlock x:Name="DetailsAchievements" Text="Loading…" FontSize="16" FontWeight="SemiBold"
@@ -602,12 +629,12 @@
                                                     <ColumnDefinition x:Name="AchievementsFill" Width="0*"/>
                                                     <ColumnDefinition x:Name="AchievementsRest" Width="1*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <Border Grid.ColumnSpan="2" CornerRadius="3" Background="#33FFFFFF"/>
-                                                <Border Grid.Column="0" CornerRadius="3" Background="{DynamicResource Accent}"/>
+                                                <Border Grid.ColumnSpan="2" Background="#33FFFFFF"/>
+                                                <Border Grid.Column="0" Background="{DynamicResource Accent}"/>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
-                                    <Border Style="{StaticResource InfoCard}">
+                                    <Border Style="{StaticResource XboxCard}">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -627,7 +654,7 @@
 
                                 <!-- Manage: rename, cover, background -->
                                 <Border x:Name="ManagePanel" Grid.Row="1" Grid.ColumnSpan="2" Visibility="Collapsed"
-                                        Style="{StaticResource InfoCard}" HorizontalAlignment="Left" Margin="0,0,0,14">
+                                        Style="{StaticResource XboxCard}" HorizontalAlignment="Left" Margin="0,0,0,14">
                                     <StackPanel>
                                         <TextBlock Text="Game name" FontSize="12" Foreground="{DynamicResource TextMuted}"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -637,21 +664,21 @@
                                                 <TextBlock x:Name="GameNameHint" IsHitTestVisible="False" FontSize="16"
                                                            Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="15,0,12,0"/>
                                             </Grid>
-                                            <Button Style="{StaticResource ActionButton}" Margin="10,0,0,0" Click="OnSaveGameNameClick">
+                                            <Button Style="{StaticResource XboxButton}" Margin="10,0,0,0" Click="OnSaveGameNameClick">
                                                 <TextBlock Text="Save name"/>
                                             </Button>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                            <Button Style="{StaticResource ActionButton}" Margin="0,10,10,0" Click="OnChangeCoverClick">
+                                            <Button Style="{StaticResource XboxButton}" Margin="0,10,10,0" Click="OnChangeCoverClick">
                                                 <TextBlock Text="Change cover…"/>
                                             </Button>
-                                            <Button Style="{StaticResource ActionButton}" Margin="0,10,10,0" Click="OnChangeBackgroundClick">
+                                            <Button Style="{StaticResource XboxButton}" Margin="0,10,10,0" Click="OnChangeBackgroundClick">
                                                 <TextBlock Text="Change background…"/>
                                             </Button>
-                                            <Button Style="{StaticResource ActionButton}" Margin="0,10,10,0" Click="OnGridDbClick">
+                                            <Button Style="{StaticResource XboxButton}" Margin="0,10,10,0" Click="OnGridDbClick">
                                                 <TextBlock Text="SteamGridDB…"/>
                                             </Button>
-                                            <Button x:Name="ResetGameButton" Style="{StaticResource ActionButton}" Margin="0,10,0,0"
+                                            <Button x:Name="ResetGameButton" Style="{StaticResource XboxButton}" Margin="0,10,0,0"
                                                     Click="OnResetGameClick">
                                                 <TextBlock Text="Restore original"/>
                                             </Button>
@@ -661,19 +688,19 @@
 
                                 <!-- Actions -->
                                 <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                    <Button x:Name="DetailsPlayButton" Style="{StaticResource PrimaryAction}" Width="230" Height="50"
+                                    <Button x:Name="DetailsPlayButton" Style="{StaticResource XboxPrimary}" Width="230" Height="50"
                                             Click="OnDetailsPlayClick">
                                         <TextBlock Text="▶  Play"/>
                                     </Button>
-                                    <Button x:Name="DetailsStoreButton" Style="{StaticResource PillButton}" Width="230" Height="50"
+                                    <Button x:Name="DetailsStoreButton" Style="{StaticResource XboxButton}" Width="230" Height="50"
                                             Margin="12,0,0,0" Click="OnDetailsStoreClick">
                                         <TextBlock Text="More about the game"/>
                                     </Button>
-                                    <Button x:Name="DetailsAchievementsButton" Style="{StaticResource PillButton}" Width="200" Height="50"
+                                    <Button x:Name="DetailsAchievementsButton" Style="{StaticResource XboxButton}" Width="200" Height="50"
                                             Margin="12,0,0,0" Click="OnDetailsAchievementsClick">
                                         <TextBlock Text="Achievements"/>
                                     </Button>
-                                    <Button x:Name="DetailsManageButton" Style="{StaticResource PillButton}" Width="230" Height="50"
+                                    <Button x:Name="DetailsManageButton" Style="{StaticResource XboxButton}" Width="230" Height="50"
                                             Margin="12,0,0,0" Click="OnDetailsManageClick">
                                         <TextBlock x:Name="DetailsManageLabel" Text="Manage   ▾"/>
                                     </Button>
@@ -681,7 +708,7 @@
                             </Grid>
 
                             <!-- SteamGridDB picker (covers / backgrounds / logos) -->
-                            <Border x:Name="GridDbPanel" Visibility="Collapsed" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabNavigation="Cycle" Background="{DynamicResource Bg}" Padding="36,32,36,26">
+                            <Border x:Name="GridDbPanel" Visibility="Collapsed" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabNavigation="Cycle" Background="{DynamicResource Bg}" Padding="72,56,72,40">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -690,13 +717,13 @@
                                     <StackPanel>
                                         <TextBlock Text="STEAMGRIDDB" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
                                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                            <Button x:Name="GridTabCover" Style="{StaticResource PillButton}" Height="42" Width="150"
+                                            <Button x:Name="GridTabCover" Style="{StaticResource XboxButton}" Height="42" Width="150"
                                                     Tag="Cover" Click="OnGridTabClick"><TextBlock Text="Covers"/></Button>
-                                            <Button x:Name="GridTabBackground" Style="{StaticResource PillButton}" Height="42" Width="150"
+                                            <Button x:Name="GridTabBackground" Style="{StaticResource XboxButton}" Height="42" Width="150"
                                                     Margin="10,0,0,0" Tag="Background" Click="OnGridTabClick"><TextBlock Text="Backgrounds"/></Button>
-                                            <Button x:Name="GridTabLogo" Style="{StaticResource PillButton}" Height="42" Width="150"
+                                            <Button x:Name="GridTabLogo" Style="{StaticResource XboxButton}" Height="42" Width="150"
                                                     Margin="10,0,0,0" Tag="Logo" Click="OnGridTabClick"><TextBlock Text="Logos"/></Button>
-                                            <Button Style="{StaticResource PillButton}" Height="42" Width="110"
+                                            <Button Style="{StaticResource XboxButton}" Height="42" Width="110"
                                                     Margin="10,0,0,0" Click="OnGridCloseClick"><TextBlock Text="Back"/></Button>
                                         </StackPanel>
                                         <TextBlock x:Name="GridStatus" Margin="0,12,0,10" FontSize="13" TextWrapping="Wrap"
@@ -709,7 +736,7 @@
                             </Border>
 
                             <!-- Achievements list (Steam) -->
-                            <Border x:Name="AchievementsPanel" Visibility="Collapsed" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabNavigation="Cycle" Background="{DynamicResource Bg}" Padding="36,32,36,26">
+                            <Border x:Name="AchievementsPanel" Visibility="Collapsed" KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabNavigation="Cycle" Background="{DynamicResource Bg}" Padding="72,56,72,40">
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
@@ -717,7 +744,7 @@
                                     </Grid.RowDefinitions>
                                     <StackPanel Margin="0,0,0,14">
                                         <TextBlock Text="ACHIEVEMENTS" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
-                                        <TextBlock x:Name="AchievementsTitle" FontSize="28" FontWeight="Bold" Margin="0,4,60,0"
+                                        <TextBlock x:Name="AchievementsTitle" FontSize="34" FontWeight="Light" Margin="0,4,60,0"
                                                    TextTrimming="CharacterEllipsis"/>
                                         <TextBlock x:Name="AchievementsSummary" FontSize="14" Margin="0,4,0,10"
                                                    Foreground="{DynamicResource TextMuted}"/>
@@ -726,10 +753,10 @@
                                                 <ColumnDefinition x:Name="AchievementsListFill" Width="0*"/>
                                                 <ColumnDefinition x:Name="AchievementsListRest" Width="1*"/>
                                             </Grid.ColumnDefinitions>
-                                            <Border Grid.ColumnSpan="2" CornerRadius="3" Background="#33FFFFFF"/>
-                                            <Border Grid.Column="0" CornerRadius="3" Background="{DynamicResource Accent}"/>
+                                            <Border Grid.ColumnSpan="2" Background="#33FFFFFF"/>
+                                            <Border Grid.Column="0" Background="{DynamicResource Accent}"/>
                                         </Grid>
-                                        <Button x:Name="AchievementsBackButton" Style="{StaticResource PillButton}" Height="42" Width="110"
+                                        <Button x:Name="AchievementsBackButton" Style="{StaticResource XboxButton}" Height="42" Width="110"
                                                 HorizontalAlignment="Left" Click="OnAchievementsCloseClick">
                                             <TextBlock Text="Back"/>
                                         </Button>
@@ -740,7 +767,7 @@
                                 </Grid>
                             </Border>
 
-                            <Button x:Name="DetailsCloseButton" Style="{StaticResource PillButton}" Width="44" Height="44"
+                            <Button x:Name="DetailsCloseButton" Style="{StaticResource XboxButton}" Width="44" Height="44"
                                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,18,18,0"
                                     Padding="0" HorizontalContentAlignment="Center" Click="OnDetailsCloseClick" ToolTip="Close">
                                 <Path Stretch="None" Stroke="{DynamicResource TextPrimary}" StrokeThickness="2"
@@ -754,8 +781,8 @@
                 <Grid x:Name="FriendsPanel" Visibility="Collapsed"
                       KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
                     <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnFriendsDimClick"/>
-                    <Border Width="440" HorizontalAlignment="Right" Margin="0,22,22,22" CornerRadius="16"
-                            Background="{DynamicResource Bg}" BorderBrush="#22FFFFFF" BorderThickness="1" Padding="24,22">
+                    <Border Width="470" HorizontalAlignment="Right" Background="{DynamicResource Bg}"
+                            BorderBrush="{DynamicResource Accent}" BorderThickness="3,0,0,0" Padding="32,44,32,32">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -764,7 +791,7 @@
                             </Grid.RowDefinitions>
                             <StackPanel>
                                 <TextBlock Text="STEAM" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
-                                <TextBlock Text="Friends online" FontSize="28" FontWeight="Bold" Margin="0,4,0,0"/>
+                                <TextBlock Text="Friends online" FontSize="36" FontWeight="Light" Margin="0,4,0,0"/>
                                 <TextBlock x:Name="FriendsStatus" FontSize="13" Foreground="{DynamicResource TextMuted}"
                                            TextWrapping="Wrap" Margin="0,4,0,14"/>
                             </StackPanel>
@@ -772,18 +799,19 @@
                                 <ItemsControl x:Name="FriendsList" Focusable="False" IsTabStop="False">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Button Style="{StaticResource Tile}" Height="64" Margin="4,0,4,8"
+                                            <Button Style="{StaticResource XboxRow}" Height="68" Margin="0,0,0,8" Padding="10,0"
+                                                    HorizontalContentAlignment="Stretch"
                                                     Click="OnFriendClick" Tag="{Binding SteamId}">
-                                                <Grid Margin="10,0">
+                                                <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="*"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <Grid Width="42" Height="42" VerticalAlignment="Center">
-                                                        <Ellipse Fill="{DynamicResource SurfaceHi}"/>
-                                                        <Ellipse><Ellipse.Fill><ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/></Ellipse.Fill></Ellipse>
-                                                        <Ellipse Width="12" Height="12" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                                                 Fill="{Binding StatusBrush}" Stroke="{DynamicResource Surface}" StrokeThickness="2"/>
+                                                    <Grid Width="46" Height="46" VerticalAlignment="Center">
+                                                        <Rectangle Fill="{DynamicResource SurfaceHi}"/>
+                                                        <Rectangle><Rectangle.Fill><ImageBrush ImageSource="{Binding Avatar}" Stretch="UniformToFill"/></Rectangle.Fill></Rectangle>
+                                                        <Rectangle Width="13" Height="13" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                   Fill="{Binding StatusBrush}" Stroke="{DynamicResource Bg}" StrokeThickness="2" Margin="0,0,-3,-3"/>
                                                     </Grid>
                                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                                                         <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -797,11 +825,11 @@
                                 </ItemsControl>
                             </ScrollViewer>
                             <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,12,0,0">
-                                <Button x:Name="FriendsChatButton" Style="{StaticResource PrimaryAction}" Height="46" Width="190"
+                                <Button x:Name="FriendsChatButton" Style="{StaticResource XboxPrimary}" Height="46" Width="190"
                                         Click="OnOpenSteamChatClick">
                                     <TextBlock Text="Open Steam chat"/>
                                 </Button>
-                                <Button x:Name="FriendsSetupButton" Style="{StaticResource PillButton}" Height="46" Width="190"
+                                <Button x:Name="FriendsSetupButton" Style="{StaticResource XboxButton}" Height="46" Width="190"
                                         Margin="12,0,0,0" Click="OnFriendsSetupClick">
                                     <TextBlock x:Name="FriendsSetupLabel" Text="Refresh"/>
                                 </Button>
@@ -864,13 +892,13 @@
                 <Grid x:Name="QuickPanel" Visibility="Collapsed"
                       KeyboardNavigation.DirectionalNavigation="Contained" KeyboardNavigation.TabNavigation="Cycle">
                     <Rectangle Fill="#66000000" MouseLeftButtonUp="OnQuickDimClick"/>
-                    <Border Width="440" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,96,52,0"
-                            CornerRadius="16" Background="{DynamicResource Bg}" BorderBrush="#22FFFFFF" BorderThickness="1"
-                            Padding="26,22">
+                    <Border Width="440" HorizontalAlignment="Right" VerticalAlignment="Stretch"
+                            Background="{DynamicResource Bg}" BorderBrush="{DynamicResource Accent}" BorderThickness="3,0,0,0"
+                            Padding="32,96,32,32">
                         <Grid>
                             <!-- Volume -->
                             <StackPanel x:Name="VolumePanel" Visibility="Collapsed">
-                                <TextBlock Text="Volume" FontSize="26" FontWeight="Bold"/>
+                                <TextBlock Text="Volume" FontSize="34" FontWeight="Light"/>
                                 <TextBlock Text="Left / Right changes the system volume." FontSize="13" Margin="0,4,0,16"
                                            Foreground="{DynamicResource TextMuted}"/>
                                 <DockPanel>
@@ -885,7 +913,7 @@
 
                             <!-- Wi-Fi -->
                             <StackPanel x:Name="WifiPanel" Visibility="Collapsed">
-                                <TextBlock Text="Network" FontSize="26" FontWeight="Bold"/>
+                                <TextBlock Text="Network" FontSize="34" FontWeight="Light"/>
                                 <TextBlock x:Name="WifiStatus" FontSize="14" TextWrapping="Wrap" Margin="0,4,0,14"
                                            Foreground="{DynamicResource TextMuted}"/>
 
@@ -893,11 +921,11 @@
                                     <ScrollViewer x:Name="WifiScroll" MaxHeight="300" VerticalScrollBarVisibility="Hidden" Focusable="False">
                                         <StackPanel x:Name="WifiList"/>
                                     </ScrollViewer>
-                                    <Button x:Name="WifiScanButton" Style="{StaticResource MenuRow}" FontSize="15" Padding="16,9"
+                                    <Button x:Name="WifiScanButton" Style="{StaticResource XboxRow}" FontSize="15" Padding="16,9"
                                             Margin="0,12,0,0" Click="OnWifiScanClick"><TextBlock Text="Scan again"/></Button>
-                                    <Button x:Name="WifiDisconnectButton" Style="{StaticResource MenuRow}" FontSize="15" Padding="16,9"
+                                    <Button x:Name="WifiDisconnectButton" Style="{StaticResource XboxRow}" FontSize="15" Padding="16,9"
                                             Margin="0,8,0,0" Click="OnWifiDisconnectClick"><TextBlock Text="Disconnect Wi-Fi"/></Button>
-                                    <Button x:Name="WifiSettingsButton" Style="{StaticResource MenuRow}" FontSize="15" Padding="16,9"
+                                    <Button x:Name="WifiSettingsButton" Style="{StaticResource XboxRow}" FontSize="15" Padding="16,9"
                                             Margin="0,8,0,0" Click="OnWifiSettingsClick"><TextBlock Text="Open Windows network settings"/></Button>
                                 </StackPanel>
 
@@ -906,9 +934,9 @@
                                     <TextBox x:Name="WifiPasswordBox" Style="{StaticResource FieldBox}" MaxLength="63"/>
                                     <TextBlock Text="A opens the on-screen keyboard. Leave it empty for an open network (no password)."
                                                FontSize="12" TextWrapping="Wrap" Margin="0,8,0,12" Foreground="{DynamicResource TextMuted}"/>
-                                    <Button Style="{StaticResource MenuRow}" FontSize="15" Padding="16,9"
+                                    <Button Style="{StaticResource XboxRow}" FontSize="15" Padding="16,9"
                                             Click="OnWifiPasswordConnectClick"><TextBlock Text="Connect"/></Button>
-                                    <Button Style="{StaticResource MenuRow}" FontSize="15" Padding="16,9" Margin="0,8,0,0"
+                                    <Button Style="{StaticResource XboxRow}" FontSize="15" Padding="16,9" Margin="0,8,0,0"
                                             Click="OnWifiPasswordCancelClick"><TextBlock Text="Cancel"/></Button>
                                 </StackPanel>
                             </StackPanel>
@@ -920,28 +948,28 @@
                 <Grid x:Name="PowerPanel" Visibility="Collapsed"
                       KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
                     <Rectangle Fill="#CC000000" MouseLeftButtonUp="OnPowerDimClick"/>
-                    <Border Width="420" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="16"
-                            Background="{DynamicResource Bg}" BorderBrush="#22FFFFFF" BorderThickness="1" Padding="28,24">
+                    <Border Width="440" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Background="{DynamicResource Bg}" BorderBrush="{DynamicResource Accent}" BorderThickness="0,4,0,0" Padding="36,30">
                         <StackPanel>
-                            <TextBlock x:Name="PowerTitle" Text="Power" FontSize="28" FontWeight="Bold"/>
+                            <TextBlock x:Name="PowerTitle" Text="Power" FontSize="34" FontWeight="Light"/>
                             <TextBlock x:Name="PowerSubtitle" Text="What should the PC do?" FontSize="14" TextWrapping="Wrap"
                                        Margin="0,6,0,18" Foreground="{DynamicResource TextMuted}"/>
 
                             <StackPanel x:Name="PowerMain">
-                                <Button x:Name="PowerSleepButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,0,0,10"
+                                <Button x:Name="PowerSleepButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,0,0,10"
                                         Tag="Sleep" Click="OnPowerChoiceClick"><TextBlock Text="Sleep"/></Button>
-                                <Button x:Name="PowerRestartButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,0,0,10"
+                                <Button x:Name="PowerRestartButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,0,0,10"
                                         Tag="Restart" Click="OnPowerChoiceClick"><TextBlock Text="Restart"/></Button>
-                                <Button x:Name="PowerShutdownButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,0,0,10"
+                                <Button x:Name="PowerShutdownButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,0,0,10"
                                         Tag="ShutDown" Click="OnPowerChoiceClick"><TextBlock Text="Shut down"/></Button>
-                                <Button x:Name="PowerCancelButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,10,0,0"
+                                <Button x:Name="PowerCancelButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,10,0,0"
                                         Click="OnPowerCancelClick"><TextBlock Text="Cancel"/></Button>
                             </StackPanel>
 
                             <StackPanel x:Name="PowerConfirm" Visibility="Collapsed">
-                                <Button x:Name="PowerConfirmButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,0,0,10"
+                                <Button x:Name="PowerConfirmButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,0,0,10"
                                         Click="OnPowerConfirmClick"><TextBlock x:Name="PowerConfirmLabel"/></Button>
-                                <Button x:Name="PowerConfirmCancelButton" Style="{StaticResource MenuRow}" Width="364" Margin="0,0,0,0"
+                                <Button x:Name="PowerConfirmCancelButton" Style="{StaticResource XboxRow}" Width="364" Margin="0,0,0,0"
                                         Click="OnPowerBackClick"><TextBlock Text="Cancel"/></Button>
                             </StackPanel>
                         </StackPanel>
@@ -952,59 +980,64 @@
 
         <!-- ===== Launch overlay: covers the launcher from launch until the game closes ===== -->
         <Grid x:Name="LaunchOverlay" Visibility="Collapsed" Opacity="0">
-            <Image x:Name="OverlayBackdrop" Stretch="UniformToFill" Opacity="0.35" IsHitTestVisible="False"/>
+            <Image x:Name="OverlayBackdrop" Stretch="UniformToFill" Opacity="0.6" IsHitTestVisible="False"/>
             <Rectangle IsHitTestVisible="False">
                 <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#B3000000" Offset="0"/>
-                        <GradientStop Color="{DynamicResource BgColor}" Offset="0.85"/>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                        <GradientStop Color="#FA000000" Offset="0"/>
+                        <GradientStop Color="#D9000000" Offset="0.5"/>
+                        <GradientStop Color="#40000000" Offset="1"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
             </Rectangle>
             <Viewbox Stretch="Uniform">
                 <Grid Width="1280" Height="720">
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,40">
-                        <Grid Width="200" Height="200" HorizontalAlignment="Center">
-                            <Ellipse Stroke="{DynamicResource Accent}" StrokeThickness="1" Opacity="0.35"/>
-                            <Ellipse Margin="20" Stroke="{DynamicResource Accent}" StrokeThickness="1" Opacity="0.2"/>
-                            <Ellipse x:Name="OverlaySpinner" Stroke="{DynamicResource Accent}" StrokeThickness="2"
-                                     StrokeDashArray="40 200" StrokeDashCap="Round" RenderTransformOrigin="0.5,0.5">
-                                <Ellipse.RenderTransform>
-                                    <RotateTransform x:Name="OverlaySpin"/>
-                                </Ellipse.RenderTransform>
-                            </Ellipse>
-                            <Border Width="104" Height="156" CornerRadius="8" ClipToBounds="True"
-                                    Background="{DynamicResource Surface}">
-                                <Grid>
-                                    <TextBlock x:Name="OverlayInitial" FontSize="48" FontWeight="SemiBold"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    <Image x:Name="OverlayCover" Stretch="UniformToFill"/>
-                                </Grid>
-                            </Border>
-                        </Grid>
-                        <TextBlock x:Name="OverlaySource" Text="LITELAUNCHER · STEAM" Margin="0,30,0,0"
-                                   HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
-                                   Foreground="{DynamicResource Accent}"/>
-                        <TextBlock x:Name="OverlayTitle" Margin="0,8,0,0" HorizontalAlignment="Center"
-                                   FontSize="44" FontWeight="Bold" TextTrimming="CharacterEllipsis" MaxWidth="900"/>
-                        <TextBlock x:Name="OverlayStatus" Margin="0,10,0,0" HorizontalAlignment="Center"
-                                   FontSize="17" Foreground="{DynamicResource TextMuted}"/>
-                        <Border Width="240" Height="3" Margin="0,18,0,0" CornerRadius="2" HorizontalAlignment="Center"
-                                Background="{DynamicResource Surface}">
-                            <Border x:Name="OverlayProgress" HorizontalAlignment="Left" Width="0" CornerRadius="2"
-                                    Background="{DynamicResource Accent}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="120,0,0,24">
+                        <Border Width="210" Height="315" Background="{DynamicResource Surface}" VerticalAlignment="Center"
+                                BorderBrush="#55FFFFFF" BorderThickness="1" ClipToBounds="True">
+                            <Grid>
+                                <TextBlock x:Name="OverlayInitial" FontSize="60" FontWeight="Light"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <Image x:Name="OverlayCover" Stretch="UniformToFill"/>
+                            </Grid>
                         </Border>
-                        <TextBlock x:Name="OverlayHint" Margin="0,16,0,0" HorizontalAlignment="Center"
-                                   FontSize="12" Foreground="{DynamicResource TextMuted}"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
-                            <Button x:Name="OverlayCancelButton" Style="{StaticResource ActionButton}"
-                                    Click="OnOverlayCancelClick">
-                                <TextBlock x:Name="OverlayCancelLabel" Text="B   ✕  Cancel launch"/>
-                            </Button>
-                            <Button x:Name="OverlayForceButton" Style="{StaticResource ActionButton}"
-                                    Margin="12,0,0,0" Visibility="Collapsed" Click="OnOverlayForceClick">
-                                <TextBlock x:Name="OverlayForceLabel" Text="A   ⏻  Force close game"/>
-                            </Button>
+                        <StackPanel Margin="52,0,0,0" VerticalAlignment="Center" Width="640">
+                            <TextBlock x:Name="OverlaySource" Text="LITELAUNCHER · STEAM"
+                                       FontSize="12" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
+                            <TextBlock x:Name="OverlayTitle" Margin="0,8,0,0" FontSize="54" FontWeight="Light"
+                                       TextWrapping="Wrap" MaxHeight="140"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                                <Grid Width="28" Height="28" VerticalAlignment="Center">
+                                    <Ellipse x:Name="OverlaySpinner" Stroke="{DynamicResource Accent}" StrokeThickness="3"
+                                             StrokeDashArray="5 3" RenderTransformOrigin="0.5,0.5">
+                                        <Ellipse.RenderTransform>
+                                            <RotateTransform x:Name="OverlaySpin"/>
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                </Grid>
+                                <TextBlock x:Name="OverlayStatus" Margin="16,0,0,0" VerticalAlignment="Center"
+                                           FontSize="20" Foreground="{DynamicResource TextPrimary}"/>
+                            </StackPanel>
+                            <Border Width="520" Height="4" Margin="0,16,0,0" HorizontalAlignment="Left" Background="#33FFFFFF">
+                                <Border x:Name="OverlayProgress" HorizontalAlignment="Left" Width="0"
+                                        Background="{DynamicResource Accent}"/>
+                            </Border>
+                            <TextBlock x:Name="OverlayHint" Margin="0,14,0,0" FontSize="13" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextMuted}"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,30,0,0">
+                                <Button x:Name="OverlayCancelButton" Style="{StaticResource XboxButton}"
+                                        Click="OnOverlayCancelClick">
+                                    <TextBlock x:Name="OverlayCancelLabel" Text="B   ✕  Cancel launch"/>
+                                </Button>
+                                <Button x:Name="OverlayResumeButton" Style="{StaticResource XboxPrimary}"
+                                        Margin="0,0,12,0" Visibility="Collapsed" Click="OnOverlayResumeClick">
+                                    <TextBlock Text="A   ▶  Back to game"/>
+                                </Button>
+                                <Button x:Name="OverlayForceButton" Style="{StaticResource XboxButton}"
+                                        Margin="12,0,0,0" Visibility="Collapsed" Click="OnOverlayForceClick">
+                                    <TextBlock x:Name="OverlayForceLabel" Text="A   ⏻  Force close game"/>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </Grid>

@@ -98,8 +98,8 @@ public partial class MainWindow
 
     private void OnLaunchersDimClick(object sender, MouseButtonEventArgs e) => CloseLaunchers();
 
-    // The chosen client opens on its game library and our window steps aside, so it is the one you see
-    // (it used to open behind the launcher, or on the store page). Alt+Tab or the taskbar brings LiteLauncher back.
+    // The chosen client opens and our window steps aside, so it is the one you see
+    // (it used to open behind the launcher). Alt+Tab or the taskbar brings LiteLauncher back.
     private void OnOpenSteamLauncher(object sender, RoutedEventArgs e)
     {
         CloseLaunchers();
@@ -111,13 +111,37 @@ public partial class MainWindow
         CloseLaunchers();
         try
         {
-            Process.Start(new ProcessStartInfo("com.epicgames.launcher://apps/library") { UseShellExecute = true })?.Dispose();
+            // Start the program itself (what the Start menu shortcut does): it opens on the Epic home page, or
+            // brings the window forward when it is already running. The store link is only a fallback.
+            var exe = FindEpicLauncherExe();
+            var start = exe is not null
+                ? new ProcessStartInfo(exe) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(exe)! }
+                : new ProcessStartInfo("com.epicgames.launcher://store") { UseShellExecute = true };
+            Process.Start(start)?.Dispose();
             StepAsideForClient();
         }
-        catch (Exception ex) when (ex is Win32Exception or FileNotFoundException)
+        catch (Exception ex) when (ex is Win32Exception or FileNotFoundException or InvalidOperationException)
         {
             ShowToast("The Epic Games Launcher is not installed on this PC.");
         }
+    }
+
+    private static string? FindEpicLauncherExe()
+    {
+        foreach (var root in new[]
+                 {
+                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                 })
+        {
+            if (string.IsNullOrEmpty(root)) continue;
+            foreach (var bits in new[] { "Win64", "Win32" })
+            {
+                var path = Path.Combine(root, "Epic Games", "Launcher", "Portal", "Binaries", bits, "EpicGamesLauncher.exe");
+                if (File.Exists(path)) return path;
+            }
+        }
+        return null;
     }
 
     private void StepAsideForClient()

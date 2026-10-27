@@ -70,7 +70,6 @@ public partial class MainWindow
         {
             Width = 56,
             Height = 56,
-            CornerRadius = new CornerRadius(6),
             ClipToBounds = true,
             Margin = new Thickness(0, 0, 16, 0),
             VerticalAlignment = VerticalAlignment.Center,
@@ -127,7 +126,7 @@ public partial class MainWindow
 
         return new Button
         {
-            Style = (Style)FindResource("MenuRow"),
+            Style = (Style)FindResource("XboxRow"),
             Content = layout,
             Padding = new Thickness(14, 10, 14, 10),
             Margin = new Thickness(0, 0, 0, 8),

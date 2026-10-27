@@ -42,6 +42,38 @@ internal static class GameProcessKiller
         return killed;
     }
 
+    /// <summary>Brings the running game's window to the front. False when no window of the game was found.</summary>
+    public static bool BringToFront(Game game)
+    {
+        var folder = ProcessScope.Resolve(game);
+        if (folder is null) return false;
+
+        var self = Environment.ProcessId;
+        foreach (var process in Process.GetProcesses())
+        {
+            try
+            {
+                if (process.Id == self) continue;
+                var window = process.MainWindowHandle;
+                if (window == IntPtr.Zero) continue;
+                var image = ImagePath(process.Id);
+                if (image is null || !ProcessScope.IsInside(folder, image)) continue;
+
+                if (IsIconic(window)) ShowWindow(window, 9); // SW_RESTORE
+                return SetForegroundWindow(window);
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or NotSupportedException)
+            {
+                // closing right now, or not ours to touch
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+        return false;
+    }
+
     private static string? ImagePath(int pid)
     {
         var handle = OpenProcess(ProcessQueryLimitedInformation, false, (uint)pid);
@@ -68,4 +100,16 @@ internal static class GameProcessKiller
     [DllImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetForegroundWindow(IntPtr window);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ShowWindow(IntPtr window, int command);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(IntPtr window);
 }

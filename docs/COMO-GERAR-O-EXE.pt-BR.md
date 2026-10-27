@@ -47,3 +47,20 @@ Suas chaves de API e configurações ficam em `%APPDATA%\LiteLauncher`, fora do 
 
 O instalador não tem assinatura digital paga, então o Windows SmartScreen pode mostrar "O Windows protegeu seu computador".
 Clique em **Mais informações → Executar assim mesmo**. Isso é esperado em programas novos e sem certificado comprado.
+
+## Já enviei os arquivos, mas não aparece nenhum .exe
+
+Enviar os arquivos (`git push`) só roda o teste automático. O instalador só é gerado quando você publica uma **tag de versão**:
+
+1. No PowerShell, dentro da pasta do projeto:
+   ```
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+   (para uma nova versão, use outro número, como `v1.0.1`).
+2. No GitHub, aba **Actions**, aguarde o fluxo **Release** ficar verde (alguns minutos).
+3. Aba **Releases** (coluna da direita da página inicial do repositório): baixe `LiteLauncher-Setup.exe`.
+
+Sem usar o terminal: aba **Actions → Release → Run workflow**. Esse caminho gera os arquivos, mas só como download dentro da própria execução (seção *Artifacts*, no fim da página), sem criar a Release.
+
+Se o fluxo ficar vermelho, abra a execução, clique na etapa com o X e copie a mensagem de erro. Se o projeto estiver numa subpasta do repositório, a pasta `.github` precisa ficar na **raiz** do repositório, senão o GitHub não enxerga os fluxos.

@@ -23,6 +23,14 @@ public sealed class AppSettings
     // General
     public bool StartFullscreen { get; set; }
 
+    /// <summary>Look for a newer GitHub release at startup (at most once a day).</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    public DateTimeOffset? LastUpdateCheck { get; set; }
+
+    /// <summary>How the library is ordered: "Recent", "Name" or "Size".</summary>
+    public string LibrarySort { get; set; } = "Recent";
+
     // Steam account (public info only: never a password or token)
     public string? SteamId { get; set; }
     public string? PersonaName { get; set; }
@@ -47,6 +55,9 @@ public sealed class AppSettings
     /// <summary>Last played and minutes LiteLauncher recorded itself (Epic has no local play history), keyed by "Source:Id".</summary>
     public Dictionary<string, PlayRecord> PlayRecords { get; set; } = new();
 
+    /// <summary>Games the user starred, as "Source:Id".</summary>
+    public List<string> Favorites { get; set; } = new();
+
     /// <summary>Per-game name/cover/background chosen by the user, keyed by "Source:Id".</summary>
     public Dictionary<string, GameOverride> GameOverrides { get; set; } = new();
 
@@ -64,8 +75,10 @@ public sealed class AppSettings
 
         SteamWebApiKey = string.IsNullOrWhiteSpace(SteamWebApiKey) ? null : SteamWebApiKey.Trim();
         SteamGridDbApiKey = string.IsNullOrWhiteSpace(SteamGridDbApiKey) ? null : SteamGridDbApiKey.Trim();
+        if (LibrarySort is not ("Recent" or "Name" or "Size")) LibrarySort = "Recent";
         GameOverrides ??= new();
         PlayRecords ??= new();
+        Favorites = (Favorites ?? new()).Where(k => !string.IsNullOrWhiteSpace(k)).Distinct(StringComparer.Ordinal).ToList();
         foreach (var key in GameOverrides.Where(p => p.Value is null || p.Value.IsEmpty).Select(p => p.Key).ToList())
             GameOverrides.Remove(key);
     }
