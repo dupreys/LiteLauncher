@@ -55,13 +55,16 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         InitLanguage();
+        RecentList.AddHandler(RequestBringIntoViewEvent, new RequestBringIntoViewEventHandler(OnRecentBringIntoView));
 
         _steamPath = SteamLocator.FindSteamPath();
-        _providers = new IGameProvider[] { new SteamProvider(_steamPath), new LiteLauncher.Core.Epic.EpicProvider() };
+        _providers = new IGameProvider[] { new SteamProvider(_steamPath), new LiteLauncher.Core.Epic.EpicProvider(),
+            new LiteLauncher.Core.Manual.ManualProvider(() => App.Settings.ManualGames) };
 
         _view = CollectionViewSource.GetDefaultView(_items);
         _view.Filter = o => o is GameItem g && MatchesFilter(g) && MatchesSearch(g);
         GameGrid.ItemsSource = _view;
+        InitNotInstalled();
 
         _gamepad.ButtonPressed += OnGamepad;
         _gamepad.ComboHeld += OnGamepadCombo;
@@ -137,6 +140,7 @@ public partial class MainWindow : Window
     {
         InitSettingsUi();
         ApplyBackdropSettings();
+        ApplyHomeStyle();
         UpdateClock();
         ShowView(AppView.Home, sound: false);
 
@@ -144,6 +148,7 @@ public partial class MainWindow : Window
         StartLiveUpdates();
         _ = LoadSavedAvatarAsync();
         _ = AutoCheckForUpdateAsync();
+        _ = MaybeShowReleaseNotesAsync();
     }
 
     // ---- Library -------------------------------------------------------------------
@@ -223,18 +228,21 @@ public partial class MainWindow : Window
         }
 
         // Home only needs the first few covers; the full grid loads the rest when it is first opened.
-        foreach (var item in _items.Take(HomeTileCount + 1)) item.EnsureCoverLoaded();
+        if (HomeShowsAllGames) RequestLibraryCovers();
+        else foreach (var item in _items.Take(HomeTileCount + 1)) item.EnsureCoverLoaded();
         if (_libraryCoversRequested) RequestLibraryCovers();
 
         RebuildHome();
+        RebuildOwned();
         UpdateCount();
         UpdateAccountUi();
+        _ = FetchOwnedIfNeededAsync();
     }
 
     private void RebuildHome()
     {
         var hero = _items.FirstOrDefault();
-        var recent = _items.Skip(1).Take(HomeTileCount).ToList();
+        var recent = _items.Skip(1).Take(HomeShowsAllGames ? int.MaxValue : HomeTileCount).ToList();
 
         // Remember which game the user is on, so focus can follow it if its tile moves.
         var focusedTile = Keyboard.FocusedElement as ContentControl;
@@ -243,6 +251,7 @@ public partial class MainWindow : Window
 
         HeroTile.Content = hero;
         HeroTile.IsEnabled = hero is not null;
+        if (!HomeHasFocus()) UpdateHomeGameInfo(hero);
 
         // Replacing the list recreates its buttons, so only do it when the games actually changed.
         var recentChanged = !_shownRecent.SequenceEqual(recent);
@@ -326,6 +335,7 @@ public partial class MainWindow : Window
 
         StartEpicTracking();
         _runningPoll.Start();
+        StartDownloadsPolling();
         PollRunningGame();
     }
 
@@ -340,6 +350,19 @@ public partial class MainWindow : Window
     /// Steam publishes the running game in the registry, so the highlighted game follows whatever you start,
     /// even from Steam itself, without waiting for the manifest to be rewritten.
     /// </summary>
+    private DateTimeOffset? _steamSessionStart;
+    private string _steamSessionName = "";
+
+    /// <summary>A Steam game closed: remember the session for the play time screen.</summary>
+    private void EndSteamSession(int appId)
+    {
+        if (_steamSessionStart is not { } start) return;
+        _steamSessionStart = null;
+        var minutes = (int)Math.Round((DateTimeOffset.Now - start).TotalMinutes);
+        if (PlayHistory.Add(App.Settings.PlaySessions, $"{SteamProvider.ProviderName}:{appId}", _steamSessionName, start, minutes))
+            QueueSave();
+    }
+
     private void PollRunningGame()
     {
         var id = SteamRunningApp.GetRunningAppId();
@@ -349,11 +372,14 @@ public partial class MainWindow : Window
 
         var previous = _runningAppId;
         _runningAppId = id;
+        if (previous > 0) EndSteamSession(previous);
 
         if (id > 0)
         {
             var key = $"{SteamProvider.ProviderName}:{id}";
             _playedNow[key] = DateTimeOffset.Now;
+            _steamSessionStart = DateTimeOffset.Now;
+            _steamSessionName = _items.FirstOrDefault(i => GameSorter.Key(i.Game) == key)?.Name ?? $"Steam {id}";
 
             var item = _items.FirstOrDefault(i => GameSorter.Key(i.Game) == key);
             _nowPlaying = item?.Name;
@@ -387,16 +413,25 @@ public partial class MainWindow : Window
         if (SearchHint is not null) SearchHint.Visibility = SearchBox.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (_view is null) return; // can fire during InitializeComponent
         _view.Refresh();
+        _ownedView.Refresh();
         UpdateCount();
     }
 
     private void UpdateCount()
     {
-        var shown = _view.Cast<object>().Count();
+        var shownInstalled = _view.Cast<object>().Count();
+        var shownOwned = _filter == LibraryFilter.Steam ? _ownedView.Cast<object>().Count() : 0;
+        var shown = shownInstalled + shownOwned;
         var query = SearchBox.Text.Trim();
         var filtering = query.Length > 0 || _filter != LibraryFilter.Installed;
 
-        CountText.Text = filtering ? Loc.F("{0} of {1} games", shown, _items.Count) : Loc.F("{0} games", _items.Count);
+        CountText.Text = _filter == LibraryFilter.Steam
+            ? (query.Length > 0
+                ? Loc.F("{0} of {1} games", shown, _items.Count(i => i.Game.Source == SteamProvider.ProviderName) + _owned.Count)
+                : _owned.Count > 0
+                    ? Loc.F("{0} installed · {1} not installed", shownInstalled, _owned.Count)
+                    : Loc.F("{0} games", shownInstalled))
+            : filtering ? Loc.F("{0} of {1} games", shown, _items.Count) : Loc.F("{0} games", _items.Count);
 
         NoResultsText.Visibility = shown == 0 ? Visibility.Visible : Visibility.Collapsed;
         NoResultsText.Text = query.Length > 0
@@ -405,7 +440,7 @@ public partial class MainWindow : Window
             {
                 LibraryFilter.Recent => Loc.T("Nothing played yet. Games you play show up here."),
                 LibraryFilter.Favorites => Loc.T("No favourites yet. Press X on a game to add it here."),
-                LibraryFilter.Steam => Loc.T("No installed Steam games."),
+                LibraryFilter.Steam => _ownedProblem ?? Loc.T("No installed Steam games."),
                 LibraryFilter.Epic => Loc.T("No installed Epic games."),
                 _ => Loc.T("No installed games found."),
             };
@@ -424,7 +459,7 @@ public partial class MainWindow : Window
     /// <summary>On the library screen, typing anywhere starts a search.</summary>
     private void OnPreviewTextInput(object sender, TextCompositionEventArgs e)
     {
-        if (_current != AppView.Library || DetailsOpen || FriendsOpen || LaunchersOpen || Keyboard.FocusedElement is TextBox) return;
+        if (_current != AppView.Library || DetailsOpen || FriendsOpen || LaunchersOpen || AddGameOpen || Keyboard.FocusedElement is TextBox) return;
         if (e.Text.Length == 0 || char.IsControl(e.Text[0])) return;
         if (SearchBox.Text.Length == 0 && char.IsWhiteSpace(e.Text[0])) return;
 
@@ -454,7 +489,11 @@ public partial class MainWindow : Window
         if (GameGrid.SelectedItem is GameItem item) LaunchGame(item);
     }
 
-    private void LaunchGame(GameItem item) => ShowLaunchOverlay(item);
+    private void LaunchGame(GameItem item)
+    {
+        if (item.Game.NotInstalled) OpenGameDetails(item); // nothing to start: the menu offers the download
+        else ShowLaunchOverlay(item);
+    }
 
     /// <summary>Hands the game to its provider. Returns false when it could not be started.</summary>
     private bool StartGameNow(GameItem item)
@@ -519,6 +558,7 @@ public partial class MainWindow : Window
         HomeView.Visibility = view == AppView.Home ? Visibility.Visible : Visibility.Collapsed;
         LibraryView.Visibility = view == AppView.Library ? Visibility.Visible : Visibility.Collapsed;
         SettingsView.Visibility = view == AppView.Settings ? Visibility.Visible : Visibility.Collapsed;
+        OpaqueShield.Visibility = view == AppView.Home ? Visibility.Collapsed : Visibility.Visible;
 
         UIElement shown = view switch
         {
@@ -553,7 +593,7 @@ public partial class MainWindow : Window
                     if (_homeFocus is FrameworkElement { IsLoaded: true, IsVisible: true, Focusable: true } remembered)
                         target = remembered;
                     else
-                        target = HeroTile.IsEnabled ? HeroTile : LibraryTile;
+                        target = HeroTile.IsEnabled ? HeroTile : LibraryTile.IsVisible ? LibraryTile : NavLibrary;
                     break;
                 case AppView.Library:
                     target = (UIElement?)SelectedCard() ?? (UIElement?)FirstCard() ?? SearchBox;
@@ -815,19 +855,30 @@ public partial class MainWindow : Window
     private void ApplyBackdropSettings()
     {
         var settings = App.Settings;
-        DimOverlay.Opacity = settings.ShowBackdrop ? settings.BackdropDim : 0;
-        BottomShade.Opacity = settings.FullBackdrop && settings.ShowBackdrop ? 0.55 : 0.92; // full screen art needs less shade
-        FitBackdropToggle.IsEnabled = !settings.FullBackdrop;
+        var artShown = settings.ShowBackdrop || WallpaperActive;
+        DimOverlay.Opacity = artShown ? settings.BackdropDim : 0;
+        // Full screen art needs less shade; with the background colour off the area below the games is pure OLED black.
+        BottomShade.Opacity = !settings.UseBackgroundColor ? 1.0 : settings.FullBackdrop && artShown ? 0.55 : 0.92;
+
+        // Banner style with the colour off: the art stays in the upper part and everything below it is pure OLED black
+        // (the shade reaches solid black early instead of fading slowly to the bottom edge).
+        if (BottomShade.Fill is LinearGradientBrush shade && shade.GradientStops.Count >= 2)
+        {
+            var oledBanner = !settings.UseBackgroundColor && !settings.FullBackdrop;
+            shade.GradientStops[0].Offset = oledBanner ? 0.38 : 0.45;
+            shade.GradientStops[1].Offset = oledBanner ? 0.62 : 1.0;
+        }
+        UpdateBackdropStyleLabel();
         ConfigureBackdrop(BackdropA, BackdropA.Source); // the fit/fill choice may have changed
         ConfigureBackdrop(BackdropB, BackdropB.Source);
         ConfigureBackdrop(OverlayBackdrop, OverlayBackdrop.Source);
 
-        if (!settings.ShowBackdrop)
+        if (!artShown)
         {
             _currentBackdropKey = null;
             FadeBackdrop(null);
         }
-        else if (_currentBackdropKey is null && _lastBackdropItem is not null)
+        else if (_currentBackdropKey is null && (_lastBackdropItem is not null || WallpaperActive))
         {
             _ = SetBackdropAsync(_lastBackdropItem);
         }
@@ -836,6 +887,7 @@ public partial class MainWindow : Window
     private async Task SetBackdropAsync(GameItem? item)
     {
         _lastBackdropItem = item;
+        if (await ShowWallpaperAsync()) return; // a fixed wallpaper replaces the game art
         if (!App.Settings.ShowBackdrop) return;
 
         var path = item?.Game.BackdropPath ?? item?.Game.CoverPath;
@@ -882,15 +934,35 @@ public partial class MainWindow : Window
         return mask;
     }
 
+    // Two looks for the game art behind everything (Settings > Theme):
+    //   Full screen: the picture covers the whole screen (like the Steam home); a shade at the bottom keeps the text readable.
+    //   Banner:      the picture along the top, fading into the background colour towards the bottom.
     private static void ConfigureBackdrop(System.Windows.Controls.Image target, ImageSource? source)
     {
-        var fit = App.Settings.FitBackdrop && !App.Settings.FullBackdrop
-                  && source is System.Windows.Media.Imaging.BitmapSource { PixelHeight: > 0 } bitmap
-                  && (double)bitmap.PixelWidth / bitmap.PixelHeight >= FitMinAspect;
+        if (App.Settings.FullBackdrop)
+        {
+            target.Stretch = Stretch.UniformToFill;
+            target.VerticalAlignment = VerticalAlignment.Stretch;
+            target.OpacityMask = null;
+            return;
+        }
 
+        var fit = source is System.Windows.Media.Imaging.BitmapSource { PixelHeight: > 0 } bitmap
+                  && (double)bitmap.PixelWidth / bitmap.PixelHeight >= FitMinAspect;
         target.Stretch = fit ? Stretch.Uniform : Stretch.UniformToFill;
         target.VerticalAlignment = fit ? VerticalAlignment.Top : VerticalAlignment.Stretch;
         target.OpacityMask = fit ? BackdropFadeMask : null;
+    }
+
+    private void UpdateBackdropStyleLabel() =>
+        BackdropStyleLabel.Text = Loc.F("Background style: {0}", Loc.T(App.Settings.FullBackdrop ? "Full screen" : "Banner"));
+
+    private void OnBackdropStyleClick(object sender, RoutedEventArgs e)
+    {
+        App.Settings.FullBackdrop = !App.Settings.FullBackdrop;
+        ApplyBackdropSettings();
+        QueueSave();
+        App.Sounds.Play(SoundKind.Select);
     }
 
     private async Task<ImageSource?> LoadBackdropAsync(string path)
@@ -913,13 +985,18 @@ public partial class MainWindow : Window
 
         ConfigureBackdrop(incoming, image);
         incoming.Source = image;
-        incoming.BeginAnimation(OpacityProperty, new DoubleAnimation(image is null ? 0 : 1, TimeSpan.FromMilliseconds(350)));
-        outgoing.BeginAnimation(OpacityProperty, new DoubleAnimation(0, TimeSpan.FromMilliseconds(350)));
+        var fadeIn = TimeSpan.FromMilliseconds(350);
+        incoming.BeginAnimation(OpacityProperty, new DoubleAnimation(image is null ? 0 : 1, fadeIn));
+        outgoing.BeginAnimation(OpacityProperty, new DoubleAnimation(0, fadeIn));
     }
 
     private void OnAnyGotFocus(object sender, KeyboardFocusChangedEventArgs e)
     {
-        if (e.NewFocus is ContentControl { Content: GameItem item }) _ = SetBackdropAsync(item);
+        if (e.NewFocus is ContentControl { Content: GameItem item })
+        {
+            _ = SetBackdropAsync(item);
+            if (e.NewFocus is DependencyObject focusTarget && HomeView.IsAncestorOf(focusTarget)) UpdateHomeGameInfo(item);
+        }
         if (e.NewFocus is not TextBox) App.Sounds.Play(SoundKind.Move);
     }
 
@@ -928,6 +1005,24 @@ public partial class MainWindow : Window
     private async void OnPreviewKeyDown(object sender, KeyEventArgs e)
     {
         if (HandlePowerKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (HandleInfoKey(e.Key) || HandleStatsKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (HandleDownloadsKey(e.Key))
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (HandleAddGameKey(e.Key))
         {
             e.Handled = true;
             return;
@@ -1008,6 +1103,10 @@ public partial class MainWindow : Window
                 if (!GoBack() && WindowStyle == WindowStyle.None) SetFullscreen(false);
                 e.Handled = true;
                 break;
+            case Key.Down when ReferenceEquals(focused, LibraryAddGameButton):
+                FocusFirstResult();
+                e.Handled = true;
+                break;
             case Key.Up when TryFocusTopBar():
                 e.Handled = true; // nothing above: go up to the top bar
                 break;
@@ -1025,6 +1124,10 @@ public partial class MainWindow : Window
         if (HandleOverlayGamepad(button)) return;
         if (HandlePowerGamepad(button)) return;
         if (HandleQuickGamepad(button)) return;
+        if (HandleInfoGamepad(button)) return;
+        if (HandleStatsGamepad(button)) return;
+        if (HandleDownloadsGamepad(button)) return;
+        if (HandleAddGameGamepad(button)) return;
         if (HandleTopBarGamepad(button)) return;
         if (HandleDetailsGamepad(button)) return;
         if (HandleFriendsGamepad(button)) return;
@@ -1090,6 +1193,10 @@ public partial class MainWindow : Window
     private UIElement? ActiveModal() =>
         PowerOpen ? PowerPanel :
         QuickOpen ? QuickPanel :
+        InfoOpen ? InfoPanel :
+        StatsOpen ? StatsPanel :
+        DownloadsOpen ? DownloadsPanel :
+        AddGameOpen ? AddGamePanel :
         GridDbOpen ? GridDbPanel :
         DetailsOpen ? GameDetails :
         FriendsOpen ? FriendsPanel :
@@ -1105,14 +1212,34 @@ public partial class MainWindow : Window
         e.Handled = true; // cancel: stay on the current item at the edge
     }
 
+    private bool IsDescendantOfWindow(DependencyObject element)
+    {
+        for (DependencyObject? d = element; d is not null; d = VisualTreeHelper.GetParent(d) ?? (d as FrameworkElement)?.Parent)
+            if (ReferenceEquals(d, this)) return true;
+        return false;
+    }
+
     private void Move(FocusNavigationDirection direction)
     {
         if (ReferenceEquals(Keyboard.FocusedElement, SearchBox) || ReferenceEquals(Keyboard.FocusedElement, NameBox))
             VirtualKeyboard.Hide(); // leaving a text field closes the on-screen keyboard
 
-        if (Keyboard.FocusedElement is not UIElement focused)
+        // Focus can be left on a card that no longer exists (the list was swapped, e.g. changing tab): recover.
+        if (Keyboard.FocusedElement is not UIElement focused || !focused.IsVisible || !IsDescendantOfWindow(focused))
         {
-            FocusView(_current);
+            if (_current == AppView.Library && ActiveModal() is null)
+            {
+                GameGrid.UpdateLayout();
+                FocusFirstResult();
+            }
+            else FocusView(_current);
+            return;
+        }
+
+        if (direction == FocusNavigationDirection.Up && TryFocusLibraryAddButton()) return;
+        if (direction == FocusNavigationDirection.Down && ReferenceEquals(focused, LibraryAddGameButton))
+        {
+            FocusFirstResult();
             return;
         }
 

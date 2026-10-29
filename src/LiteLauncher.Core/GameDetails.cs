@@ -135,6 +135,47 @@ public static class SteamPlaytime
         return null;
     }
 
+    /// <summary>Playtime in minutes of every game in the account's localconfig.vdf, read once (appId -> minutes).</summary>
+    public static IReadOnlyDictionary<string, int> ReadAll(string steamPath, string? steamId64)
+    {
+        var result = new Dictionary<string, int>();
+        try
+        {
+            var userdata = Path.Combine(steamPath, "userdata");
+            if (!Directory.Exists(userdata)) return result;
+
+            var folders = new List<string>();
+            if (long.TryParse(steamId64, out var id64) && id64 > SteamId64Base)
+                folders.Add(Path.Combine(userdata, (id64 - SteamId64Base).ToString(CultureInfo.InvariantCulture)));
+            folders.AddRange(Directory.EnumerateDirectories(userdata));
+
+            foreach (var folder in folders.Distinct())
+            {
+                var file = Path.Combine(folder, "config", "localconfig.vdf");
+                if (!File.Exists(file)) continue;
+                var all = ParseAllLocalConfig(File.ReadAllText(file));
+                if (all.Count == 0) continue;
+                return all;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        return result;
+    }
+
+    public static IReadOnlyDictionary<string, int> ParseAllLocalConfig(string vdf)
+    {
+        var result = new Dictionary<string, int>();
+        var steam = VdfParser.Parse(vdf)["UserLocalConfigStore"]?["Software"]?["Valve"]?["Steam"];
+        var apps = steam?["apps"] ?? steam?["Apps"];
+        if (apps is null) return result;
+        foreach (var (id, node) in apps.Children)
+        {
+            var minutes = node.GetLong("Playtime", -1);
+            if (minutes > 0 && id.All(char.IsAsciiDigit)) result[id] = (int)Math.Min(minutes, int.MaxValue);
+        }
+        return result;
+    }
+
     public static int? ParseLocalConfig(string vdf, string appId)
     {
         var root = VdfParser.Parse(vdf);

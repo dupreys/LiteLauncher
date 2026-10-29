@@ -507,6 +507,29 @@
         </Setter>
     </Style>
 
+    <!-- Solid (theme-coloured) variant of XboxButton, readable over game art -->
+    <Style x:Key="XboxButtonSolid" TargetType="Button" BasedOn="{StaticResource XboxButton}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Frame" Background="{DynamicResource Surface}" BorderBrush="Transparent" BorderThickness="3"
+                            Padding="{TemplateBinding Padding}" SnapsToDevicePixels="True">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="{DynamicResource SurfaceHi}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Frame" Property="Background" Value="{DynamicResource Accent}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource Bg}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- List row (friends, achievements): flat grey, accent outline when focused; no zoom -->
     <Style x:Key="XboxRow" TargetType="Button">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>

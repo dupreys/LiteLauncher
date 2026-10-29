@@ -71,6 +71,9 @@ public partial class MainWindow
     {
         ApplyTexts();
         UpdateLanguageLabel();
+        UpdateBackdropStyleLabel();
+        UpdateHomeStyleLabel();
+        UpdateHomeGameInfo(HeroTile.Content as GameItem);
         BuildFilterBar();
         UpdateCount();
         UpdateAccountUi();

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using LiteLauncher.Core;
 using LiteLauncher.Core.Epic;
 using LiteLauncher.Core.Steam;
@@ -159,10 +160,25 @@ public partial class MainWindow
     private void SetFilter(LibraryFilter filter)
     {
         if (filter == _filter) return;
+        var wasSteam = _filter == LibraryFilter.Steam;
+        var hadCard = GameFromElement(Keyboard.FocusedElement) is not null;
         _filter = filter;
+        if (wasSteam != (filter == LibraryFilter.Steam))
+            GameGrid.ItemsSource = filter == LibraryFilter.Steam ? _steamTab : _view; // Steam: installed first, then the games not installed
         StyleFilterChips();
         App.Sounds.Play(SoundKind.Move);
         RefreshLibraryView();
+        if (filter == LibraryFilter.Steam) OnSteamTabOpened();
+
+        // The grid's items were swapped: put the focus on a card that really exists, once the new cards are built.
+        if (hadCard)
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            {
+                if (_current != AppView.Library || ActiveModal() is not null) return;
+                if (GameFromElement(Keyboard.FocusedElement) is { } cur && Keyboard.FocusedElement is UIElement { IsVisible: true } &&
+                    GameGrid.Items.Contains(cur)) return;
+                FocusFirstResult();
+            }));
     }
 
     private void CycleFilter(int step)
@@ -176,6 +192,7 @@ public partial class MainWindow
     {
         var hadCard = GameFromElement(Keyboard.FocusedElement) is not null;
         _view.Refresh();
+        _ownedView.Refresh();
         UpdateCount();
         if (hadCard || Keyboard.FocusedElement is null or Window) FocusFirstResult();
     }

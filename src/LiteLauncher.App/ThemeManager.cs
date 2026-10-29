@@ -19,7 +19,7 @@ public static class ThemeManager
     public static readonly (string Name, string Hex)[] BackgroundColors =
     {
         ("Graphite", "#0F1115"), ("Midnight", "#0B1020"), ("Plum", "#150B1E"),
-        ("Forest", "#0A1612"), ("Crimson", "#1A0B0E"),
+        ("Forest", "#0A1612"), ("Crimson", "#1A0B0E"), ("OLED black", "#000000"),
     };
 
     public static void Apply(AppSettings settings)
@@ -27,7 +27,9 @@ public static class ThemeManager
         var resources = Application.Current.Resources;
 
         var accent = Parse(settings.Accent, Color.FromRgb(0x4C, 0x9A, 0xFF));
-        var background = Parse(settings.Background, Color.FromRgb(0x0F, 0x11, 0x15));
+        var background = settings.UseBackgroundColor
+            ? Parse(settings.Background, Color.FromRgb(0x0F, 0x11, 0x15))
+            : Colors.Black; // colour switched off: OLED black
 
         resources["AccentColor"] = accent;
         resources["BgColor"] = background;

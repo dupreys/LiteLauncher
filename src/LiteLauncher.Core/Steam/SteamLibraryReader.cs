@@ -19,6 +19,10 @@ public static class SteamLibraryReader
         "Proton", "Steam Linux Runtime", "Steamworks Common Redistributables",
     };
 
+    /// <summary>Steam entries that are not games (redistributables, Proton...).</summary>
+    public static bool IsIgnored(string appId, string name) =>
+        IgnoredAppIds.Contains(appId) || IgnoredNamePrefixes.Any(p => name.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
     public static IReadOnlyList<string> GetLibraryFolders(string steamPath)
     {
         var folders = new List<string> { steamPath };

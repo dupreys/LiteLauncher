@@ -123,8 +123,10 @@ public partial class MainWindow
     /// <summary>Uses artwork downloaded earlier when Steam's own cache has none.</summary>
     private static Game WithCachedArt(Game game)
     {
-        var cover = game.CoverPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Cover);
-        var hero = game.BackdropPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Backdrop);
+        var cover = game.CoverPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Cover)
+                    ?? SteamGridDbArt.Cached(ArtCacheDir, game, StoreArtKind.Cover);
+        var hero = game.BackdropPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Backdrop)
+                   ?? SteamGridDbArt.Cached(ArtCacheDir, game, StoreArtKind.Backdrop);
         return cover == game.CoverPath && hero == game.BackdropPath ? game : game with { CoverPath = cover, BackdropPath = hero };
     }
 
@@ -132,8 +134,31 @@ public partial class MainWindow
     private async Task DownloadMissingArtAsync(IReadOnlyList<Game> games)
     {
         var fetched = false;
+        var gridKey = App.Settings.SteamGridDbApiKey;
+        var gridRejected = false;
         foreach (var game in games)
         {
+            // Epic and manually added games have no public art: SteamGridDB (with the user's own key) finds it by name.
+            if (SteamGridDbArt.Applies(game) && gridKey is not null && !gridRejected
+                && (game.CoverPath is null || game.BackdropPath is null))
+            {
+                if (!_artTried.Add(GameSorter.Key(game) + "#sgdb")) continue;
+                try
+                {
+                    int? gridId = await SteamGridDb.FindGameIdAsync(Http, gridKey, game);
+                    if (gridId is not null)
+                    {
+                        if (game.CoverPath is null && await SteamGridDbArt.DownloadAsync(Http, gridKey, ArtCacheDir, game, StoreArtKind.Cover, gridId) is not null) fetched = true;
+                        if (game.BackdropPath is null && await SteamGridDbArt.DownloadAsync(Http, gridKey, ArtCacheDir, game, StoreArtKind.Backdrop, gridId) is not null) fetched = true;
+                    }
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    gridRejected = true; // wrong key: no point asking again this time
+                }
+                continue;
+            }
+
             if (game.Source != "Steam" || (game.CoverPath is not null && game.BackdropPath is not null)) continue;
             if (!_artTried.Add(GameSorter.Key(game))) continue; // once per run; failures are retried next start
 

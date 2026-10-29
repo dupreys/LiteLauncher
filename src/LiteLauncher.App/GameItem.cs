@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.IO;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using LiteLauncher.Core;
@@ -34,6 +35,15 @@ public sealed class GameItem : INotifyPropertyChanged
 
     public string Name => Game.Name;
 
+    /// <summary>Width the cover is decoded at (smaller for the long list of games that are not installed).</summary>
+    public int CoverDecodeWidth { get; init; } = 400;
+
+    public bool NotInstalled => Game.NotInstalled;
+
+    public double TileOpacity => Game.NotInstalled ? 0.7 : 1.0;
+
+    public Visibility InstallBadgeVisibility => Game.NotInstalled ? Visibility.Visible : Visibility.Collapsed;
+
     public long SizeOnDisk => Game.SizeOnDisk;
 
     public string Initial => Game.Name.Length > 0 ? Game.Name[..1].ToUpperInvariant() : "?";
@@ -56,7 +66,7 @@ public sealed class GameItem : INotifyPropertyChanged
         _ = LoadCoverAsync(Game.CoverPath);
     }
 
-    private async Task LoadCoverAsync(string path) => Cover = await ImageLoader.LoadAsync(path, decodeWidth: 400);
+    private async Task LoadCoverAsync(string path) => Cover = await ImageLoader.LoadAsync(path, decodeWidth: CoverDecodeWidth);
 }
 
 internal static class ImageLoader

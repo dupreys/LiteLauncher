@@ -29,7 +29,7 @@ public partial class MainWindow
     /// <summary>Called on every running-game poll: notices Epic games starting/stopping and records play time.</summary>
     private void PollEpicGames()
     {
-        var epicGames = _items.Where(i => i.Game.Source == EpicProvider.ProviderName && i.Game.ExecutablePath is not null).ToList();
+        var epicGames = _items.Where(i => i.Game.Source is EpicProvider.ProviderName or LiteLauncher.Core.Manual.ManualProvider.ProviderName && i.Game.ExecutablePath is not null).ToList();
         if (epicGames.Count == 0 && _epicTracker.Running.Count == 0) return;
 
         var running = epicGames.Where(i => IsGameRunning(i.Game, 0)).Select(i => GameSorter.Key(i.Game));
@@ -51,6 +51,8 @@ public partial class MainWindow
         {
             var record = Record(key);
             record.Minutes += minutes;
+            var ended = _items.FirstOrDefault(i => GameSorter.Key(i.Game) == key);
+            PlayHistory.Add(App.Settings.PlaySessions, key, ended?.Name ?? key, now.AddMinutes(-minutes), minutes);
             record.LastPlayed = now;
             if (_runningAppId == 0) _nowPlaying = null;
         }

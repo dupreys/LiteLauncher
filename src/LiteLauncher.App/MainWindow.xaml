@@ -57,9 +57,27 @@
             </Grid>
         </DataTemplate>
 
+        <!-- Small recent-game tiles of the three Home styles -->
+        <DataTemplate x:Key="RecentTileXbox">
+            <Button Width="134" Height="134" Margin="0,0,9,0" Style="{StaticResource Tile}"
+                    Content="{Binding}" ContentTemplate="{StaticResource ArtOnly}" Click="OnGameTileClick"/>
+        </DataTemplate>
+        <DataTemplate x:Key="RecentTileTall">
+            <Button Width="140" Height="210" Margin="0,0,12,0" Style="{StaticResource Tile}"
+                    Content="{Binding}" ContentTemplate="{StaticResource ArtOnly}" Click="OnGameTileClick"/>
+        </DataTemplate>
+        <DataTemplate x:Key="RecentTileCinema">
+            <Button Width="120" Height="120" Margin="0,0,10,0" Style="{StaticResource Tile}"
+                    Content="{Binding}" ContentTemplate="{StaticResource ArtOnly}" Click="OnGameTileClick"/>
+        </DataTemplate>
+
         <!-- Cover with the game name (hero tile and library cards) -->
         <DataTemplate x:Key="ArtNamed">
-            <Grid>
+            <Grid Opacity="{Binding TileOpacity}">
+                <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,6,0,0" Padding="7,4" Background="#CC000000"
+                        Visibility="{Binding InstallBadgeVisibility}" Panel.ZIndex="3">
+                    <TextBlock Text="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="16" Foreground="White"/>
+                </Border>
                 <TextBlock Text="{Binding Initial}" FontSize="64" FontWeight="Bold"
                            Foreground="{DynamicResource TextMuted}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -117,6 +135,9 @@
             </Rectangle.Fill>
         </Rectangle>
 
+        <!-- Library and Settings are drawn on a solid background (black with the colour off, else the chosen colour) -->
+        <Rectangle x:Name="OpaqueShield" Fill="{DynamicResource Bg}" Visibility="Collapsed"/>
+
         <!-- Everything below is laid out on a 1280x720 canvas and scaled to the window -->
         <Viewbox Stretch="Uniform">
             <Grid Width="1280" Height="720">
@@ -155,6 +176,16 @@
                                            Foreground="{DynamicResource Accent}"/>
                                 <TextBlock x:Name="NowPlayingText" FontSize="14" Margin="10,0,0,0" MaxWidth="240" TextTrimming="CharacterEllipsis"
                                            VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <!-- Downloads in progress (Steam): D-pad Up from the top row, then A opens the list -->
+                        <Button x:Name="DownloadsButton" Style="{StaticResource IconButton}" Width="Auto" MinWidth="40" Margin="0,0,10,0"
+                                Visibility="Collapsed" Click="OnDownloadsClick">
+                            <StackPanel Orientation="Horizontal" Margin="12,0,14,0">
+                                <Path Stretch="None" Stroke="{DynamicResource Accent}" StrokeThickness="2" VerticalAlignment="Center"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                      Data="M12,3 V14 M7,9.5 L12,14.5 L17,9.5 M4,17 V20 H20 V17"/>
+                                <TextBlock x:Name="DownloadsText" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <!-- Network: Wi-Fi, Ethernet or offline -->
@@ -207,20 +238,29 @@
                             Click="OnGameTileClick"/>
 
                     <!-- Next recent games -->
-                    <ItemsControl x:Name="RecentList" Canvas.Left="357" Canvas.Top="293" Focusable="False" IsTabStop="False">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Width="134" Height="134" Margin="0,0,9,0" Style="{StaticResource Tile}"
-                                        Content="{Binding}" ContentTemplate="{StaticResource ArtOnly}"
-                                        Click="OnGameTileClick"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                    <!-- Scrolls sideways when there are more games than fit (Simple and Cinema show every installed game) -->
+                    <ScrollViewer x:Name="RecentScroll" Canvas.Left="339" Canvas.Top="281" Width="936" Height="158"
+                                  HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled"
+                                  Focusable="False" IsTabStop="False" PanningMode="HorizontalOnly">
+                        <ItemsControl x:Name="RecentList" Margin="18,12,18,12" Focusable="False" IsTabStop="False"
+                                      ItemTemplate="{StaticResource RecentTileXbox}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Selected game's name and details (Simple and Cinema home styles) -->
+                    <TextBlock x:Name="HomeGameTitle" Canvas.Left="56" Canvas.Top="556" FontSize="26" FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis" MaxWidth="900" IsHitTestVisible="False" Visibility="Collapsed">
+                        <TextBlock.Effect><DropShadowEffect BlurRadius="10" ShadowDepth="1" Opacity="0.85"/></TextBlock.Effect>
+                    </TextBlock>
+                    <TextBlock x:Name="HomeGameSub" Canvas.Left="56" Canvas.Top="594" FontSize="14" Foreground="{DynamicResource TextMuted}"
+                               IsHitTestVisible="False" Visibility="Collapsed">
+                        <TextBlock.Effect><DropShadowEffect BlurRadius="8" ShadowDepth="1" Opacity="0.85"/></TextBlock.Effect>
+                    </TextBlock>
 
                     <TextBlock x:Name="EmptyText" Canvas.Left="357" Canvas.Top="330" FontSize="20"
                                Foreground="{DynamicResource TextMuted}" Visibility="Collapsed"/>
@@ -296,7 +336,11 @@
                     </Button>
 
                     <!-- Text nav, bottom-left like the Xbox dashboard -->
-                    <StackPanel Canvas.Left="66" Canvas.Top="636" Orientation="Horizontal">
+                    <StackPanel x:Name="HomeNav" Canvas.Left="66" Canvas.Top="636" Orientation="Horizontal">
+                        <Button x:Name="NavLibrary" Content="My games &amp; apps" Style="{StaticResource TextNav}" Click="OnOpenLibrary" Visibility="Collapsed"/>
+                        <Button x:Name="NavLaunchers" Content="Launchers" Style="{StaticResource TextNav}" Click="OnLaunchersTileClick" Visibility="Collapsed"/>
+                        <Button x:Name="NavSettings" Content="Settings" Style="{StaticResource TextNav}" Click="OnOpenSettings" Visibility="Collapsed"/>
+                        <Button x:Name="NavFriends" Content="Friends" Style="{StaticResource TextNav}" Click="OnFriendsTileClick" Visibility="Collapsed"/>
                         <Button x:Name="NavStore" Content="Store" Style="{StaticResource TextNav}" Click="OnOpenStore"/>
                         <Button x:Name="NavCommunity" Content="Community" Style="{StaticResource TextNav}" Click="OnOpenCommunity"/>
                         <Button x:Name="NavExit" Content="Exit" Style="{StaticResource TextNav}" Click="OnExit"/>
@@ -321,7 +365,16 @@
                             <TextBlock x:Name="CountText" Margin="16,8,0,0" VerticalAlignment="Center"
                                        Foreground="{DynamicResource TextMuted}"/>
                         </StackPanel>
-                        <Grid Grid.Column="1" Width="340">
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button x:Name="LibraryStatsButton" Style="{StaticResource XboxButtonSolid}" Margin="0,0,14,0"
+                                Click="OnStatsClick">
+                            <TextBlock Text="Play time"/>
+                        </Button>
+                        <Button x:Name="LibraryAddGameButton" Style="{StaticResource XboxButtonSolid}" Margin="0,0,14,0"
+                                Click="OnAddGameClick">
+                            <TextBlock Text="+  Add game"/>
+                        </Button>
+                        <Grid Width="340">
                             <TextBox x:Name="SearchBox" Style="{StaticResource SearchBox}"
                                      ToolTip="Search installed games (Ctrl+F)" TextChanged="OnSearchChanged"/>
                             <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="16"
@@ -331,6 +384,7 @@
                                        Foreground="{DynamicResource TextMuted}" FontSize="16"
                                        VerticalAlignment="Center" Margin="40,0,12,0"/>
                         </Grid>
+                        </StackPanel>
                     </Grid>
 
                     <StackPanel x:Name="FilterBar" Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,14"/>
@@ -382,7 +436,7 @@
                     <Border Grid.Column="2" Background="#99000000" CornerRadius="4" Padding="32,24,14,24">
                         <!-- Long panels (Profile, Integrations) scroll; keyboard/gamepad focus scrolls them into view. -->
                         <ScrollViewer x:Name="SettingsScroll" VerticalScrollBarVisibility="Hidden" Focusable="False"
-                                      HorizontalScrollBarVisibility="Disabled" Padding="0,0,18,0">
+                                      HorizontalScrollBarVisibility="Disabled" Padding="10,8,22,8">
                         <Grid>
                             <!-- Sound -->
                             <StackPanel x:Name="PanelSound">
@@ -419,16 +473,27 @@
 
                                 <TextBlock Text="Background colour" Style="{StaticResource FieldLabel}" Margin="0,10,0,8"/>
                                 <WrapPanel x:Name="BackgroundSwatches"/>
+                                <ToggleButton x:Name="UseBackgroundColorToggle" Content="Use background colour"
+                                              Style="{StaticResource XToggle}" Margin="0,10,0,0"
+                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
 
                                 <ToggleButton x:Name="ShowBackdropToggle" Content="Show game art in the background"
                                               Style="{StaticResource XToggle}" Margin="0,16,0,0"
                                               Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
-                                <ToggleButton x:Name="FullBackdropToggle" Content="Wallpaper over the whole screen (Xbox style)"
-                                              Style="{StaticResource XToggle}" Margin="0,8,0,0"
-                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
-                                <ToggleButton x:Name="FitBackdropToggle" Content="Bottom fade style: show the whole image (no cropping)"
-                                              Style="{StaticResource XToggle}" Margin="0,8,0,0"
-                                              Checked="OnToggleChanged" Unchecked="OnToggleChanged"/>
+                                <Button x:Name="BackdropStyleButton" Style="{StaticResource ActionButton}" Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                        Click="OnBackdropStyleClick">
+                                    <TextBlock x:Name="BackdropStyleLabel"/>
+                                </Button>
+                                <Button x:Name="HomeStyleButton" Style="{StaticResource ActionButton}" Margin="0,8,0,0" HorizontalAlignment="Stretch"
+                                        Click="OnHomeStyleClick">
+                                    <TextBlock x:Name="HomeStyleLabel"/>
+                                </Button>
+                                <TextBlock Text="Wallpaper (replaces the game art)" Style="{StaticResource FieldLabel}" Margin="0,18,0,10"/>
+                                <WrapPanel x:Name="WallpaperPanel"/>
+                                <Button x:Name="WallpaperFileButton" Style="{StaticResource ActionButton}" Margin="0,2,0,0"
+                                        HorizontalAlignment="Stretch" Click="OnWallpaperFileClick">
+                                    <TextBlock Text="Choose your own image…"/>
+                                </Button>
                                 <TextBlock Text="Background darkness" Style="{StaticResource FieldLabel}"/>
                                 <DockPanel>
                                     <TextBlock x:Name="DimText" DockPanel.Dock="Right" Width="48" TextAlignment="Right"
@@ -563,8 +628,26 @@
                                 <Button x:Name="LanguageButton" Style="{StaticResource ActionButton}" Click="OnLanguageClick">
                                     <TextBlock x:Name="LanguageLabel"/>
                                 </Button>
+                                <Button x:Name="SettingsAddGameButton" Style="{StaticResource ActionButton}" Click="OnAddGameClick">
+                                    <TextBlock Text="Add a game manually…"/>
+                                </Button>
                                 <Button x:Name="RescanButton" Style="{StaticResource ActionButton}" Click="OnRescanClick">
                                     <TextBlock Text="Rescan game library"/>
+                                </Button>
+                                <Button Style="{StaticResource ActionButton}" Click="OnStatsClick">
+                                    <TextBlock Text="Play time and history…"/>
+                                </Button>
+                                <Button Style="{StaticResource ActionButton}" Click="OnWhatsNewClick">
+                                    <TextBlock Text="What's new in this version…"/>
+                                </Button>
+                                <Button Style="{StaticResource ActionButton}" Click="OnExportSettingsClick">
+                                    <TextBlock Text="Back up settings…"/>
+                                </Button>
+                                <Button Style="{StaticResource ActionButton}" Click="OnImportSettingsClick">
+                                    <TextBlock Text="Restore settings from a backup…"/>
+                                </Button>
+                                <Button Style="{StaticResource ActionButton}" Click="OnDiagnosticsClick">
+                                    <TextBlock Text="Diagnostics…"/>
                                 </Button>
                                 <TextBlock x:Name="VersionText" Margin="0,26,0,0" Foreground="{DynamicResource TextMuted}"/>
                             </StackPanel>
@@ -577,22 +660,193 @@
                 <StackPanel x:Name="HintBar" Orientation="Horizontal" HorizontalAlignment="Right"
                             VerticalAlignment="Bottom" Margin="0,0,70,26"/>
 
+                <!-- ===== Info (diagnostics, release notes) ===== -->
+                <Grid x:Name="InfoPanel" Visibility="Collapsed"
+                      KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
+                    <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnInfoDimClick"/>
+                    <Border Background="{DynamicResource Bg}">
+                        <Grid Margin="72,56,72,40">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock x:Name="InfoCaption" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}" Margin="0,0,0,10"/>
+                                <TextBlock x:Name="InfoTitle" FontSize="38" FontWeight="Light" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="InfoSubtitle" FontSize="14" Foreground="{DynamicResource TextMuted}" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <Border Grid.Row="1" Style="{StaticResource XboxCard}" Margin="0,18,0,0">
+                                <ScrollViewer x:Name="InfoScroll" Focusable="False" VerticalScrollBarVisibility="Hidden">
+                                    <TextBlock x:Name="InfoBody" TextWrapping="Wrap" LineHeight="22"/>
+                                </ScrollViewer>
+                            </Border>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0">
+                                <Button x:Name="InfoCloseButton" Style="{StaticResource XboxPrimary}" Width="200" Height="50"
+                                        Click="OnInfoCloseClick">
+                                    <TextBlock Text="Close"/>
+                                </Button>
+                                <Button x:Name="InfoAction1Button" Style="{StaticResource XboxButton}" Width="220" Height="50" Margin="12,0,0,0"
+                                        Click="OnInfoAction1Click">
+                                    <TextBlock x:Name="InfoAction1Label"/>
+                                </Button>
+                                <Button x:Name="InfoAction2Button" Style="{StaticResource XboxButton}" Width="220" Height="50" Margin="12,0,0,0"
+                                        Click="OnInfoAction2Click">
+                                    <TextBlock x:Name="InfoAction2Label"/>
+                                </Button>
+                                <TextBlock Text="Up / Down to scroll" FontSize="12" Foreground="{DynamicResource TextMuted}"
+                                           VerticalAlignment="Center" Margin="18,0,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ===== Play time ===== -->
+                <Grid x:Name="StatsPanel" Visibility="Collapsed"
+                      KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
+                    <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnStatsDimClick"/>
+                    <Border Background="{DynamicResource Bg}">
+                        <Grid Margin="72,50,72,36">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="PLAY TIME" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}" Margin="0,0,0,8"/>
+                                <TextBlock Text="Play time and history" FontSize="36" FontWeight="Light" Margin="0,0,0,14"/>
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="1" Focusable="False" VerticalScrollBarVisibility="Hidden">
+                                <StackPanel x:Name="StatsContent"/>
+                            </ScrollViewer>
+                            <Button x:Name="StatsCloseButton" Grid.Row="2" Style="{StaticResource XboxPrimary}" Width="200" Height="50"
+                                    HorizontalAlignment="Left" Margin="0,10,0,0" Click="OnStatsCloseClick">
+                                <TextBlock Text="Close"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ===== Downloads (Steam) ===== -->
+                <Grid x:Name="DownloadsPanel" Visibility="Collapsed"
+                      KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
+                    <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnDownloadsDimClick"/>
+                    <Border Background="{DynamicResource Bg}">
+                        <Grid Margin="72,64,72,44">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="DOWNLOADS" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}" Margin="0,0,0,10"/>
+                                <TextBlock Text="Downloads" FontSize="42" FontWeight="Light"/>
+                                <TextBlock Text="Steam downloads and installs the games; the progress is shown here."
+                                           FontSize="14" Foreground="{DynamicResource TextMuted}" Margin="0,6,0,22"/>
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="1" Focusable="False" VerticalScrollBarVisibility="Hidden">
+                                <StackPanel x:Name="DownloadsList"/>
+                            </ScrollViewer>
+                            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,14,0,0">
+                                <Button x:Name="DownloadsCloseButton" Style="{StaticResource XboxPrimary}" Width="230" Height="50"
+                                        Click="OnDownloadsCloseClick">
+                                    <TextBlock Text="Close"/>
+                                </Button>
+                                <Button Style="{StaticResource XboxButton}" Width="230" Height="50" Margin="12,0,0,0"
+                                        Click="OnDownloadsOpenSteamClick">
+                                    <TextBlock Text="Open in Steam"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <!-- ===== Add a game by hand: same look as the game menu ===== -->
+                <Grid x:Name="AddGamePanel" Visibility="Collapsed"
+                      KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
+                    <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnAddGameDimClick"/>
+                    <Border Background="{DynamicResource Bg}" ClipToBounds="True">
+                        <Grid>
+
+                            <Grid Margin="72,64,72,44">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="340"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Margin="0,0,30,0">
+                                    <TextBlock Text="NEW GAME" FontSize="11" FontWeight="Bold"
+                                               Foreground="{DynamicResource Accent}" Margin="0,0,0,14"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Width="130" Height="195" ClipToBounds="True"
+                                                Background="{DynamicResource Surface}" VerticalAlignment="Top">
+                                            <Grid>
+                                                <TextBlock x:Name="AddGameInitial" FontSize="44" FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Margin="26,0,0,0" VerticalAlignment="Center" MaxWidth="560">
+                                            <TextBlock x:Name="AddGameTitle" FontSize="42" FontWeight="Light" TextWrapping="Wrap"/>
+                                            <Border HorizontalAlignment="Left" Margin="0,12,0,0" Padding="10,3"
+                                                    BorderBrush="{DynamicResource Accent}" BorderThickness="1">
+                                                <TextBlock Text="Added by you" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <TextBlock x:Name="AddGamePath" Margin="0,22,0,0" FontSize="14" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextMuted}"/>
+                                    <TextBlock x:Name="AddGameError" Margin="0,10,0,0" FontSize="14" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource Accent}" Visibility="Collapsed"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="0,40,0,0">
+                                    <Border Style="{StaticResource XboxCard}">
+                                        <StackPanel>
+                                            <TextBlock Text="GAME NAME" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource Accent}"/>
+                                            <Grid Margin="0,8,0,0">
+                                                <TextBox x:Name="AddGameNameBox" Style="{StaticResource FieldBox}" MaxLength="80"
+                                                         TextChanged="OnAddGameNameChanged"/>
+                                                <TextBlock x:Name="AddGameNameHint" Text="Type the game's name" IsHitTestVisible="False" FontSize="16"
+                                                           Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" Margin="15,0,12,0"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Style="{StaticResource XboxCard}">
+                                        <TextBlock Text="You can set the cover and the background later, from the game menu (Start)."
+                                                   FontSize="13" TextWrapping="Wrap" Foreground="{DynamicResource TextMuted}"/>
+                                    </Border>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                    <Button x:Name="AddGameConfirmButton" Style="{StaticResource XboxPrimary}" Width="230" Height="50"
+                                            Click="OnAddGameConfirmClick">
+                                        <TextBlock Text="Add to my games"/>
+                                    </Button>
+                                    <Button Style="{StaticResource XboxButton}" Width="230" Height="50" Margin="12,0,0,0"
+                                            Click="OnAddGameChooseAnotherClick">
+                                        <TextBlock Text="Choose another .exe…"/>
+                                    </Button>
+                                    <Button Style="{StaticResource XboxButton}" Width="200" Height="50" Margin="12,0,0,0"
+                                            Click="OnAddGameCancelClick">
+                                        <TextBlock Text="Cancel"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+
                 <!-- ===== Game menu (Start on a game): details, Play, store page, Manage ===== -->
                 <Grid x:Name="GameDetails" Visibility="Collapsed"
                       KeyboardNavigation.DirectionalNavigation="Cycle" KeyboardNavigation.TabNavigation="Cycle">
                     <Rectangle Fill="#B3000000" MouseLeftButtonUp="OnDetailsDimClick"/>
                     <Border Background="{DynamicResource Bg}" ClipToBounds="True">
                         <Grid>
-                            <Image x:Name="DetailsBackdrop" Stretch="UniformToFill" Opacity="0.55" IsHitTestVisible="False"/>
-                            <Rectangle IsHitTestVisible="False">
-                                <Rectangle.Fill>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#F2000000" Offset="0"/>
-                                        <GradientStop Color="#99000000" Offset="0.55"/>
-                                        <GradientStop Color="#33000000" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Rectangle.Fill>
-                            </Rectangle>
+                            <Image x:Name="DetailsBackdrop" Stretch="UniformToFill" Opacity="0.55" IsHitTestVisible="False" Visibility="Collapsed"/>
 
                             <Grid Margin="72,64,72,44">
                                 <Grid.ColumnDefinitions>
@@ -624,7 +878,7 @@
                                             <TextBlock x:Name="DetailsTitle" FontSize="42" FontWeight="Light" TextWrapping="Wrap"/>
                                             <Border HorizontalAlignment="Left" Margin="0,12,0,0" Padding="10,3"
                                                     BorderBrush="{DynamicResource Accent}" BorderThickness="1">
-                                                <TextBlock Text="Installed" FontSize="12" Foreground="{DynamicResource Accent}"/>
+                                                <TextBlock x:Name="DetailsInstalledLabel" Text="Installed" FontSize="12" Foreground="{DynamicResource Accent}"/>
                                             </Border>
                                         </StackPanel>
                                     </StackPanel>
@@ -703,7 +957,11 @@
                                             <Button Style="{StaticResource XboxButton}" Margin="0,10,10,0" Click="OnGridDbClick">
                                                 <TextBlock Text="SteamGridDB…"/>
                                             </Button>
-                                            <Button x:Name="ResetGameButton" Style="{StaticResource XboxButton}" Margin="0,10,0,0"
+                                            <Button x:Name="RemoveGameButton" Style="{StaticResource XboxButton}" Margin="0,10,10,0"
+                                            Visibility="Collapsed" Click="OnRemoveManualGameClick">
+                                        <TextBlock Text="Remove from launcher"/>
+                                    </Button>
+                                    <Button x:Name="ResetGameButton" Style="{StaticResource XboxButton}" Margin="0,10,0,0"
                                                     Click="OnResetGameClick">
                                                 <TextBlock Text="Restore original"/>
                                             </Button>
@@ -715,7 +973,7 @@
                                 <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal">
                                     <Button x:Name="DetailsPlayButton" Style="{StaticResource XboxPrimary}" Width="230" Height="50"
                                             Click="OnDetailsPlayClick">
-                                        <TextBlock Text="▶  Play"/>
+                                        <TextBlock x:Name="DetailsPlayLabel" Text="▶  Play"/>
                                     </Button>
                                     <Button x:Name="DetailsStoreButton" Style="{StaticResource XboxButton}" Width="230" Height="50"
                                             Margin="12,0,0,0" Click="OnDetailsStoreClick">
@@ -748,6 +1006,8 @@
                                                     Margin="10,0,0,0" Tag="Background" Click="OnGridTabClick"><TextBlock Text="Backgrounds"/></Button>
                                             <Button x:Name="GridTabLogo" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Margin="10,0,0,0" Tag="Logo" Click="OnGridTabClick"><TextBlock Text="Logos"/></Button>
+                                            <Button x:Name="GridTabShots" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
+                                                    Margin="10,0,0,0" Tag="Screenshots" Click="OnGridTabClick"><TextBlock Text="Screenshots"/></Button>
                                             <Button Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="120"
                                                     Margin="10,0,0,0" Click="OnGridCloseClick"><TextBlock Text="Back"/></Button>
                                         </StackPanel>
@@ -1004,17 +1264,8 @@
         </Viewbox>
 
         <!-- ===== Launch overlay: covers the launcher from launch until the game closes ===== -->
-        <Grid x:Name="LaunchOverlay" Visibility="Collapsed" Opacity="0">
-            <Image x:Name="OverlayBackdrop" Stretch="UniformToFill" Opacity="0.6" IsHitTestVisible="False"/>
-            <Rectangle IsHitTestVisible="False">
-                <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                        <GradientStop Color="#FA000000" Offset="0"/>
-                        <GradientStop Color="#D9000000" Offset="0.5"/>
-                        <GradientStop Color="#40000000" Offset="1"/>
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-            </Rectangle>
+        <Grid x:Name="LaunchOverlay" Visibility="Collapsed" Opacity="0" Background="{DynamicResource Bg}">
+            <Image x:Name="OverlayBackdrop" Stretch="UniformToFill" Opacity="0.6" IsHitTestVisible="False" Visibility="Collapsed"/>
             <Viewbox Stretch="Uniform">
                 <Grid Width="1280" Height="720">
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="120,0,0,24">

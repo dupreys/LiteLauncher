@@ -14,6 +14,10 @@ Inspirado em [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMo
 
 <p align="center"><img src="docs/screenshots/launchers.png" alt="Launchers" width="900"><br><sub>Launchers: Steam e Epic Games com a quantidade de jogos instalados</sub></p>
 
+## Versão
+
+Esta é a versão **1.0.0**. O número que aparece em Configurações → Geral vem da tag do release (por exemplo, `v1.0.0`).
+
 ## Instalação
 
 1. Abra a página de [**Releases**](../../releases) do projeto.
@@ -38,7 +42,8 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 ## Recursos
 
 **Tela inicial estilo Xbox**
-- Fundo que muda para a arte do jogo selecionado, ocupando a tela inteira como na tela inicial do Xbox, com sombreamento suave nos cantos. Em Configurações → Tema você pode escolher o estilo com a imagem só na parte de cima, esmaecendo para o fundo (inteira ou preenchendo)
+- Fundo que muda para a arte do jogo selecionado, com sombreamento suave nos cantos. Em Configurações → Tema, *Estilo do fundo* alterna entre **Tela inteira** (a imagem cobre a tela toda, como na tela inicial da Steam) e **Faixa** (imagem inteira na parte de cima, esmaecendo para a cor de fundo)
+- **Três estilos de tela inicial** (Configurações → Tema → *Estilo da tela inicial*): **Xbox** (cartão grande, jogos recentes e atalhos em blocos), **Simples** (só os jogos em uma fileira de capas, com o último jogo um pouco maior, o nome do jogo embaixo e os atalhos em um menu de texto, como a Steam) e **Cinema** (nome do jogo em letras grandes e uma fileira compacta de capas). Em Simples e Cinema a fileira mostra **todos** os jogos instalados e rola para o lado com o direcional
 - Cartão grande do último jogo jogado e fila dos jogos recentes
 - Atalhos: *My games & apps*, *Launchers*, *Settings* e *Friends*; menu de texto (Store, Community, Exit)
 - Menus de rede, volume e energia seguem o mesmo visual plano estilo Xbox One das demais telas
@@ -50,8 +55,16 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 - Abas **Installed / Recent / Steam / Epic Games / Favourites**: `LB` e `RB` no controle (`PageUp` e `PageDown` no teclado) trocam de aba. *Recent* mostra só o que você já jogou
 - **Ordenação**: `RT` no controle (ou `F2`, ou um clique no botão *Sort*) alterna entre Recentes, A–Z e Tamanho em disco; a escolha fica salva
 - **Favoritos**: `X` no controle (ou `F`) marca ou desmarca o jogo
+- **Papel de parede**: em Configurações → Tema, escolha um fundo fixo entre vários prontos (Aurora, Pôr do sol, Oceano, Nebulosa…) ou use uma imagem sua, no lugar da arte do jogo. Biblioteca, Configurações, detalhes do jogo e a tela de jogo aberto usam fundo sólido (preto com a cor de fundo desligada, ou a cor escolhida)
+- **Jogos da Steam não instalados**: na biblioteca, a aba *Steam* mostra primeiro os jogos instalados e, depois deles, os jogos da sua conta que ainda não estão no PC (esmaecidos) (precisa entrar com a Steam; funciona com o perfil público em *Detalhes do jogo* ou com uma chave da Steam Web API em Configurações → Integrações). A ou Start abre o menu do jogo com o botão **Baixar**: o LiteLauncher pede a instalação à Steam e acompanha o progresso. Enquanto algo baixa, aparece um ícone de download na barra superior (direcional para cima, depois A) com a lista de downloads, porcentagem e velocidade. Quem baixa de fato é o cliente da Steam, que pode pedir para você confirmar a pasta de instalação. A lista só mostra o que a Steam está de fato baixando (se você desistir na janela da Steam, nada aparece). O progresso vem do arquivo que a Steam atualiza de tempos em tempos e é estimado entre uma atualização e outra, então pode diferir um pouco do número da Steam. **Pausar** não é possível pelo LiteLauncher (a Steam não oferece esse comando a outros programas): use o botão *Abrir na Steam*
+- **Arte automática da Epic (SteamGridDB)**: com a chave do SteamGridDB em Integrações, jogos da Epic e jogos manuais sem capa ganham capa e fundo buscados pelo nome (você pode trocar depois em Manage)
+- **Tempo de jogo e histórico** (Configurações → Geral, ou o botão na biblioteca): horas dos últimos 7 e 30 dias, gráfico por dia, jogos mais jogados e últimas sessões. As sessões são contadas enquanto o LiteLauncher está aberto
+- **Backup e restauração** das configurações em um arquivo `.json` (as chaves de API nunca entram no backup nem são sobrescritas ao restaurar)
+- **Diagnóstico**: tela com versão, pastas da Steam e da Epic, contagens e últimos erros, sem chaves; dá para copiar ou salvar em arquivo (o nome de usuário do Windows é ocultado)
+- **Novidades**: depois de atualizar, o app mostra o texto do `RELEASE_NOTES.md` da versão instalada (também em Configurações → Geral). Edite esse arquivo antes de criar a tag de uma nova versão
+- **Jogos manuais**: para jogos fora da Steam e da Epic, use *+ Adicionar jogo* na biblioteca (ou Configurações → Geral → *Adicionar um jogo manualmente…*). Abre a janela do Windows para você navegar até o `.exe`; depois uma tela no mesmo visual do menu Start pede o nome do jogo. Capa e fundo podem ser definidos depois em Manage, e o jogo pode ser removido do launcher por lá (o `.exe` nunca é apagado)
 - **Capas automáticas**: se a Steam ainda não guardou a capa ou o fundo de um jogo, o LiteLauncher baixa a arte da loja da Steam e guarda em `%APPDATA%\LiteLauncher\covers` (a Epic não oferece arte pública; esses jogos continuam com a letra)
-- Busca: comece a digitar, `Ctrl+F` ou `Y` no controle. No controle, `Y` abre o teclado do Windows, `Start` confirma a busca e `B` fecha o teclado (um segundo `B` fecha a busca)
+- Busca: comece a digitar, `Ctrl+F` ou `Y` no controle. No controle, `Y` abre o teclado de toque do Windows (para o layout de controle, ative *Gamepad* na engrenagem do teclado; depende da versão do Windows), `Start` confirma a busca e `B` fecha o teclado (um segundo `B` fecha a busca)
 
 **Tela de abertura do jogo (overlay)**
 - Cartão com a capa e contagem de 3 segundos; `B` ou `Esc` cancela
@@ -63,6 +76,7 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 - **Conquistas** (Steam): progresso com barra e lista completa (ícone, nome, descrição, data). Precisa estar logado na Steam, com "Detalhes do jogo" público. A Epic não oferece conquistas a outros programas
 - **Manage**: renomear, escolher capa/fundo próprios, ou restaurar os originais (só muda no LiteLauncher)
 - **SteamGridDB**: busca capas, fundos e logos da comunidade (precisa de uma chave gratuita)
+- **Capturas (16:9)**: na mesma tela, a aba *Screenshots* lista as imagens oficiais da loja da Steam (1920x1080). Como são sempre 16:9, ocupam a tela inteira sem cortes quando usadas como fundo (só jogos da Steam). Os fundos do SteamGridDB costumam ser bem mais largos que 16:9 e por isso sobram bordas ou cortes
 
 **Amigos (Steam)**
 - Amigos online, com os que estão jogando primeiro e o nome do jogo; `A` abre a conversa no cliente da Steam
@@ -80,7 +94,7 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 
 **Configurações**
 - **Som**: volume do sistema e sons de navegação
-- **Tema**: cor de destaque, cor de fundo, arte do jogo no fundo (mostrar imagem inteira ou preencher), escurecimento
+- **Tema**: cor de destaque, cor de fundo (inclui **preto OLED**; a opção *Usar cor de fundo* desligada deixa tudo em preto OLED), arte do jogo no fundo (tela inteira ou faixa), escurecimento
 - **Perfil**: nome, avatar pronto ou foto do seu PC (a Steam não é alterada)
 - **Conta Steam**: login oficial pela Steam (OpenID) ou reutilizar a conta do cliente
 - **Geral**: **idioma** (English, Português do Brasil e Español; na primeira vez segue o idioma do Windows), iniciar em tela cheia, **iniciar junto com o Windows**, verificar atualizações e reler a biblioteca
@@ -90,7 +104,7 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 
 **Entradas:** teclado, mouse e controles. Controle Xbox (e qualquer um que a Steam Input mostre como Xbox) funciona direto. **PlayStation (DualShock 4 / DualSense), Switch Pro e controles DirectInput genéricos** também são lidos pelo Windows, sem programa extra: `X`/Cruz seleciona, Círculo volta, Triângulo busca, Quadrado favorita, `Options` abre o menu do jogo, `Share`/`Create` abre a energia e `L1`/`R1`/`R2` trocam abas e ordenação (a numeração dos botões desses controles foi montada pela documentação e ainda não foi testada em todos os modelos; se algum botão estiver trocado, abra uma issue com o modelo). Direcional ou analógico esquerdo movem; `Start` abre o menu do jogo ou atualiza. `F11` alterna tela cheia; `--fullscreen` inicia assim.
 
-Configurações ficam em `%APPDATA%\LiteLauncher\settings.json`. Se algo der errado, o launcher continua aberto e registra os detalhes em `%APPDATA%\LiteLauncher\crash.log`; envie esse arquivo ao relatar um problema. Suas chaves de API ficam nessa pasta, nunca no projeto.
+Configurações ficam em `%APPDATA%\LiteLauncher\settings.json`. Se algo der errado, o launcher continua aberto e registra os detalhes em `%APPDATA%\LiteLauncher\crash.log`; envie esse arquivo ao relatar um problema. Suas chaves de API (Steam e SteamGridDB) ficam nessa pasta, nunca no projeto, e são gravadas **criptografadas com o DPAPI do Windows**: só a sua conta neste PC consegue lê-las. Se copiar o `settings.json` para outro PC, será preciso digitar as chaves de novo.
 
 ## Sobre o "Entrar com a Steam"
 
@@ -99,11 +113,12 @@ Usa o login oficial da Steam (OpenID 2.0): o navegador abre `steamcommunity.com`
 ## Roadmap
 
 - [ ] Provedores GOG e Xbox / Game Pass
-- [ ] Jogos da Steam não instalados
-- [ ] Arte para jogos da Epic (via SteamGridDB)
 - [ ] Perfis de controle e remapeamento de botões
 - [ ] Instalar atualizações automaticamente (hoje o programa só avisa)
 - [ ] Assinatura de código do instalador
+- [x] Jogos da Steam não instalados, com download pelo launcher
+- [x] Arte para jogos da Epic (via SteamGridDB)
+- [x] Jogos manuais, papel de parede, backup, diagnóstico e histórico de tempo de jogo
 - [x] Iniciar junto com o Windows
 - [x] Aviso de atualização
 - [x] Download de capas ausentes (Steam)

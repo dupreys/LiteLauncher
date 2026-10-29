@@ -37,10 +37,18 @@ internal static class VirtualKeyboard
             if (File.Exists(TabTipPath))
             {
                 Process.Start(new ProcessStartInfo(TabTipPath) { UseShellExecute = true });
-                await Task.Delay(900); // the touch keyboard needs a moment to appear
+                await Task.Delay(600); // the touch keyboard needs a moment to appear
 
                 if (generation != _generation) { Close(); return; } // closed while it was still starting
                 if (IsWindowShown(TouchKeyboardClass)) return;
+
+                // Windows 11's text input panel (the controller-friendly keyboard) is asked for directly.
+                if (ToggleTextInputPanel())
+                {
+                    await Task.Delay(500);
+                    if (generation != _generation) { Close(); return; }
+                    if (IsWindowShown(TouchKeyboardClass)) return;
+                }
             }
 
             if (generation != _generation) return;
@@ -76,6 +84,33 @@ internal static class VirtualKeyboard
         var window = FindWindow(windowClass, null);
         return window != IntPtr.Zero && IsWindowVisible(window);
     }
+
+    [ComImport, Guid("37c994e7-432b-4834-a2f7-dce1f13b834b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface ITipInvocation
+    {
+        void Toggle(IntPtr window);
+    }
+
+    private static readonly Guid TipInvocationClass = new("4ce576fa-83dc-4f88-951c-9d0782b4e376");
+
+    private static bool ToggleTextInputPanel()
+    {
+        try
+        {
+            if (Type.GetTypeFromCLSID(TipInvocationClass) is not { } type) return false;
+            var tip = (ITipInvocation)Activator.CreateInstance(type)!;
+            tip.Toggle(GetDesktopWindow());
+            Marshal.ReleaseComObject(tip);
+            return true;
+        }
+        catch (Exception ex) when (ex is COMException or InvalidCastException or InvalidOperationException or Win32Exception)
+        {
+            return false;
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetDesktopWindow();
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr FindWindow(string? className, string? windowName);

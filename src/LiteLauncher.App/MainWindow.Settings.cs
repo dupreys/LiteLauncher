@@ -64,11 +64,11 @@ public partial class MainWindow
             OnThemeChanged();
         });
         BuildPresetAvatars();
+        BuildWallpaperChoices();
 
         DimSlider.Value = settings.BackdropDim * 100;
         ShowBackdropToggle.IsChecked = settings.ShowBackdrop;
-        FitBackdropToggle.IsChecked = settings.FitBackdrop;
-        FullBackdropToggle.IsChecked = settings.FullBackdrop;
+        UseBackgroundColorToggle.IsChecked = settings.UseBackgroundColor;
         UiSoundsToggle.IsChecked = settings.UiSounds;
         UiVolumeSlider.Value = settings.UiVolume * 100;
         FullscreenToggle.IsChecked = settings.StartFullscreen;
@@ -197,15 +197,10 @@ public partial class MainWindow
             ApplyBackdropSettings();
             QueueSave();
         }
-        else if (ReferenceEquals(toggle, FullBackdropToggle))
+        else if (ReferenceEquals(toggle, UseBackgroundColorToggle))
         {
-            App.Settings.FullBackdrop = on;
-            ApplyBackdropSettings();
-            QueueSave();
-        }
-        else if (ReferenceEquals(toggle, FitBackdropToggle))
-        {
-            App.Settings.FitBackdrop = on;
+            App.Settings.UseBackgroundColor = on;
+            ThemeManager.Apply(App.Settings);
             ApplyBackdropSettings();
             QueueSave();
         }
@@ -469,6 +464,7 @@ public partial class MainWindow
         SaveSettingsNow();
 
         UpdateAccountUi();
+        RebuildOwned();
         AccountStatus.Text = Loc.T("Signed out.");
         Keyboard.Focus(SignInButton);
     }
@@ -486,6 +482,8 @@ public partial class MainWindow
 
         _avatar = await LoadAvatarAsync(steamId, profile?.AvatarUrl);
         UpdateAccountUi();
+        _ownedTriedAt = DateTime.MinValue;
+        _ = FetchOwnedIfNeededAsync(force: true);
 
         AccountStatus.Text = profile is null
             ? Loc.T("Signed in. Your public profile could not be loaded (private profile or offline), so the picture may be missing.")

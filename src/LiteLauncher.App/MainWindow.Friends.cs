@@ -270,8 +270,14 @@ public partial class MainWindow
         var gridKey = GridDbKeyBox.Text.Trim();
         var steamChanged = (steamKey.Length == 0 ? null : steamKey) != App.Settings.SteamWebApiKey;
         App.Settings.SteamWebApiKey = steamKey.Length == 0 ? null : steamKey;
+        var gridChanged = (gridKey.Length == 0 ? null : gridKey) != App.Settings.SteamGridDbApiKey;
         App.Settings.SteamGridDbApiKey = gridKey.Length == 0 ? null : gridKey;
         _gridGameIds.Clear();
+        if (gridChanged && gridKey.Length > 0)
+        {
+            _artTried.RemoveWhere(k => k.EndsWith("#sgdb", StringComparison.Ordinal)); // new key: look for the missing art again
+            ScheduleRefresh();
+        }
         QueueSave();
         if (steamChanged)
         {

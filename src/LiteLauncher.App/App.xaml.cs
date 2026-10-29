@@ -14,6 +14,9 @@ public partial class App : Application
 
     public static SettingsStore Store { get; } = new();
 
+    /// <summary>True when there was no settings file yet: a brand-new installation.</summary>
+    public static bool FirstRun { get; private set; }
+
     public static AppSettings Settings { get; private set; } = new();
 
     public static SoundEffects Sounds { get; } = new();
@@ -22,6 +25,7 @@ public partial class App : Application
     {
         InstallErrorHandlers();
 
+        FirstRun = !File.Exists(SettingsStore.DefaultFilePath);
         Settings = Store.Load();
         Loc.Set(Settings.Language ?? Loc.Detect(System.Globalization.CultureInfo.CurrentUICulture));
         Sounds.Enabled = Settings.UiSounds;

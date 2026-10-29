@@ -24,7 +24,9 @@ public partial class MainWindow
         element is ContentControl { Content: GameItem item } ? item : null;
 
     private GameItem? DetailsItem() =>
-        _detailsKey is null ? null : _items.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey);
+        _detailsKey is null ? null
+            : _items.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey)
+              ?? _owned.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey);
 
     private void OpenGameDetails(GameItem item)
     {
@@ -39,6 +41,9 @@ public partial class MainWindow
         DetailsLogo.Visibility = Visibility.Collapsed;
         DetailsTitle.Visibility = Visibility.Visible;
         DetailsManageLabel.Text = Loc.T("Manage   ▾");
+        var manual = item.Game.Source == LiteLauncher.Core.Manual.ManualProvider.ProviderName;
+        DetailsStoreButton.Visibility = manual ? Visibility.Collapsed : Visibility.Visible;
+        RemoveGameButton.Visibility = manual ? Visibility.Visible : Visibility.Collapsed;
         FillDetails(item);
         GameDetails.Visibility = Visibility.Visible;
         App.Sounds.Play(SoundKind.Select);
@@ -53,6 +58,7 @@ public partial class MainWindow
         item.EnsureCoverLoaded();
         DetailsSource.Text = game.Source.ToUpperInvariant();
         DetailsTitle.Text = item.Name;
+        DetailsInstalledLabel.Text = Loc.T(game.NotInstalled ? "Not installed" : "Installed");
         DetailsInitial.Text = item.Initial;
         DetailsCover.Source = item.Cover;
         DetailsSize.Text = GameInfo.FormatSize(game.SizeOnDisk);
@@ -60,6 +66,7 @@ public partial class MainWindow
             ? played.ToLocalTime().ToString("d MMM yyyy", CultureInfo.CurrentCulture)
             : Loc.T("Never");
         _ = LoadDetailsImagesAsync(item);
+        UpdateDetailsPlayButton(item);
     }
 
     private async Task LoadDetailsImagesAsync(GameItem item)
@@ -87,7 +94,9 @@ public partial class MainWindow
         DetailsGenres.Text = "";
         DetailsDescription.Text = game.Source == SteamProvider.ProviderName
             ? ""
-            : Loc.F("Installed from the {0} store. Use \"More about the game\" to open its store page.", game.Source);
+            : game.Source == LiteLauncher.Core.Manual.ManualProvider.ProviderName
+                ? Loc.T("Added by you. Use Manage to change its name, cover and background.")
+                : Loc.F("Installed from the {0} store. Use \"More about the game\" to open its store page.", game.Source);
         DetailsPlaytime.Text = "—";
         _ = LoadAchievementsAsync(game, key, cts.Token); // independent of the store info: shows up when it arrives
 
@@ -153,6 +162,11 @@ public partial class MainWindow
     private void OnDetailsPlayClick(object sender, RoutedEventArgs e)
     {
         if (DetailsItem() is not { } item) return;
+        if (item.Game.NotInstalled)
+        {
+            OnDownloadButton(item);
+            return;
+        }
         CloseGameDetails();
         LaunchGame(item);
     }

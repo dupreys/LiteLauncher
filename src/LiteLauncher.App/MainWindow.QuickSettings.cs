@@ -43,8 +43,21 @@ public partial class MainWindow
     /// D-pad Up on the top row of any screen goes to the top bar (Power first); the next Up does nothing.
     /// Returns false when there is something above the focused element, so normal navigation applies.
     /// </summary>
+    /// <summary>Up from the first row of the library goes to the "Add game" button (the grid keeps focus inside itself).</summary>
+    private bool TryFocusLibraryAddButton()
+    {
+        if (_current != AppView.Library || ActiveModal() is not null || !LibraryAddGameButton.IsVisible) return false;
+        if (Keyboard.FocusedElement is not UIElement focused || GameFromElement(focused) is null) return false;
+        var above = focused.PredictFocus(FocusNavigationDirection.Up);
+        if (above is not null && GameFromElement(above) is not null) return false;
+
+        Keyboard.Focus(LibraryAddGameButton);
+        return true;
+    }
+
     private bool TryFocusTopBar()
     {
+        if (TryFocusLibraryAddButton()) return true;
         if (ActiveModal() is not null || OverlayVisible) return false;
         if (Keyboard.FocusedElement is not UIElement focused || InTopBar(focused)) return false;
 
@@ -52,7 +65,7 @@ public partial class MainWindow
         if (above is not null && !InTopBar(above)) return false;
 
         VirtualKeyboard.Hide();
-        Keyboard.Focus(NowPlayingChip.IsVisible ? NowPlayingChip : PowerButton);
+        Keyboard.Focus(NowPlayingChip.IsVisible ? NowPlayingChip : DownloadsButton.IsVisible ? DownloadsButton : PowerButton);
         return true;
     }
 

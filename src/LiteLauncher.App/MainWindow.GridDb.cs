@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using LiteLauncher.Core;
 using LiteLauncher.Core.Settings;
+using LiteLauncher.Core.Steam;
 
 namespace LiteLauncher.App;
 
@@ -30,8 +31,9 @@ public partial class MainWindow
 
     private void OnGridTabClick(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: string tag } && Enum.TryParse<ArtKind>(tag, out var kind))
-            _ = LoadGridAsync(kind);
+        if (sender is not FrameworkElement { Tag: string tag }) return;
+        if (tag == "Screenshots") _ = LoadScreenshotsAsync();
+        else if (Enum.TryParse<ArtKind>(tag, out var kind)) _ = LoadGridAsync(kind);
     }
 
     private void OnGridCloseClick(object sender, RoutedEventArgs e) => CloseGridDb();
@@ -61,6 +63,7 @@ public partial class MainWindow
         var cts = _gridCts = new CancellationTokenSource();
         _gridKind = kind;
         foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = k == kind ? FontWeights.Bold : FontWeights.Normal;
+        GridTabShots.FontWeight = FontWeights.Normal;
         GridResults.Children.Clear();
         GridStatus.Text = Loc.T("Searching SteamGridDB…");
         System.Windows.Input.Keyboard.Focus(TabFor(kind));
@@ -95,6 +98,36 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>Steam store screenshots (1920x1080): wallpapers that fill the whole screen. Applied as the game's background.</summary>
+    private async Task LoadScreenshotsAsync()
+    {
+        if (DetailsItem() is not { } item) return;
+
+        _gridCts?.Cancel();
+        var cts = _gridCts = new CancellationTokenSource();
+        _gridKind = ArtKind.Background;
+        foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = FontWeights.Normal;
+        GridTabShots.FontWeight = FontWeights.Bold;
+        GridResults.Children.Clear();
+        System.Windows.Input.Keyboard.Focus(GridTabShots);
+
+        if (item.Game.Source != SteamProvider.ProviderName)
+        {
+            GridStatus.Text = Loc.T("Screenshots are only available for Steam games.");
+            return;
+        }
+
+        GridStatus.Text = Loc.T("Loading…");
+        var shots = await SteamScreenshots.FetchAsync(Http, item.Game.Id, cts.Token);
+        if (cts.IsCancellationRequested) return;
+
+        GridStatus.Text = shots.Count == 0
+            ? Loc.T("No screenshots found for this game on Steam.")
+            : Loc.F("{0} screenshots (16:9, fill the whole screen) · pick one to use it as the background", shots.Count);
+
+        foreach (var shot in shots.Take(40)) GridResults.Children.Add(MakeArtButton(shot, ArtKind.Background, wide: true));
+    }
+
     private static string KindName(ArtKind kind) => kind switch
     {
         ArtKind.Cover => "covers",
@@ -102,12 +135,12 @@ public partial class MainWindow
         _ => "logos",
     };
 
-    private Button MakeArtButton(ArtImage art, ArtKind kind)
+    private Button MakeArtButton(ArtImage art, ArtKind kind, bool wide = false)
     {
         var (w, h) = kind switch
         {
             ArtKind.Cover => (116.0, 174.0),
-            ArtKind.Background => (300.0, 98.0),
+            ArtKind.Background => wide ? (240.0, 135.0) : (300.0, 98.0),
             _ => (220.0, 98.0),
         };
         var image = new Image { Stretch = kind == ArtKind.Logo ? Stretch.Uniform : Stretch.UniformToFill, Margin = new Thickness(kind == ArtKind.Logo ? 10 : 0) };
