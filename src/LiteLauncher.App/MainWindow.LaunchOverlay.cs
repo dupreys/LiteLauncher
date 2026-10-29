@@ -148,8 +148,56 @@ public partial class MainWindow
 
             case OverlayPhase.Playing:
                 OverlayStatus.Text = Loc.F("Playing now · {0}", elapsed.ToString(@"h\:mm\:ss"));
+                if (++_muteTicks % 7 == 0) _ = UpdateGameMuteAsync();
                 break;
         }
+    }
+
+    // The game is silenced while the launcher (overlay or Home) is in front and gets its sound back as soon as the
+    // game's own window is in front again. Only the game's audio session is touched, not the system volume.
+    private int _muteTicks;
+    private int _muteRefresh;
+    private bool _muteBusy;
+    private bool _gameMuted;
+
+    /// <param name="force">true/false silences/restores the game right now (used when the screen changes); null decides from the window in front.</param>
+    private async Task UpdateGameMuteAsync(bool? force = null)
+    {
+        if ((_muteBusy && force is null) || _overlayItem is not { } item || _overlayPhase != OverlayPhase.Playing) return;
+        _muteBusy = true;
+        try
+        {
+            var foreground = GameProcessKiller.ForegroundProcessId();
+            var self = (uint)Environment.ProcessId;
+            var muted = _gameMuted;
+            var refresh = ++_muteRefresh % 6 == 0; // new audio sessions can appear after the game started
+            _gameMuted = await Task.Run(() =>
+            {
+                var pids = GameProcessKiller.GamePids(item.Game);
+                // Programs with the game's own file name count too, in case the game runs from outside its install folder.
+                if (!string.IsNullOrEmpty(item.Game.ExecutablePath))
+                    foreach (var p in System.Diagnostics.Process.GetProcessesByName(System.IO.Path.GetFileNameWithoutExtension(item.Game.ExecutablePath)))
+                    {
+                        pids.Add((uint)p.Id);
+                        p.Dispose();
+                    }
+                bool? want = force ?? (foreground == self ? true : pids.Contains(foreground) ? false : null);
+                if (want is not { } mute) return muted; // some other program is in front: leave things as they are
+                if (mute != muted || refresh || force is not null) AppAudio.SetMute(pids, mute);
+                return mute;
+            });
+        }
+        finally
+        {
+            _muteBusy = false;
+        }
+    }
+
+    private void RestoreGameAudio(Game game)
+    {
+        if (!_gameMuted) return;
+        _gameMuted = false;
+        _ = Task.Run(() => AppAudio.SetMute(GameProcessKiller.GamePids(game), false));
     }
 
     /// <summary>Called on every running-game poll (about every 2 seconds) with Steam's running app id.</summary>
@@ -189,6 +237,7 @@ public partial class MainWindow
     private void CloseLaunchOverlay(bool returnHome)
     {
         _overlayTimer.Stop();
+        if (_overlayItem is { } closing) RestoreGameAudio(closing.Game);
         DisarmForce();
         _overlayMinimized = false;
         NowPlayingChip.Visibility = Visibility.Collapsed;
@@ -265,6 +314,7 @@ public partial class MainWindow
         LaunchOverlay.BeginAnimation(OpacityProperty, fade);
 
         ShowView(AppView.Home, sound: false);
+        _ = UpdateGameMuteAsync(force: true); // the game goes quiet as soon as you are back on Home
         Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
         {
             if (_overlayMinimized) FocusView(AppView.Home);
@@ -283,6 +333,7 @@ public partial class MainWindow
         LaunchOverlay.Visibility = Visibility.Visible;
         LaunchOverlay.BeginAnimation(OpacityProperty, new DoubleAnimation(1, TimeSpan.FromMilliseconds(250)));
         Keyboard.Focus(_overlayPhase == OverlayPhase.Playing ? OverlayResumeButton : OverlayCancelButton);
+        _ = UpdateGameMuteAsync(force: true);
     }
 
     private void OnOverlayHomeClick(object sender, RoutedEventArgs e) => MinimizeOverlay();
@@ -341,6 +392,7 @@ public partial class MainWindow
     {
         if (!OverlayForceable) return;
         BringLauncherToFront();
+        _ = UpdateGameMuteAsync(force: true);
         if (_overlayMinimized)
         {
             Keyboard.Focus(NowPlayingChip);
@@ -353,7 +405,11 @@ public partial class MainWindow
     {
         if (_overlayItem is not { } item || _overlayPhase != OverlayPhase.Playing) return;
 
-        if (GameProcessKiller.BringToFront(item.Game)) return;
+        if (GameProcessKiller.BringToFront(item.Game))
+        {
+            _ = UpdateGameMuteAsync(force: false); // back in the game: its sound returns
+            return;
+        }
 
         // No window of its own to bring forward (some games hide it): asking Steam to start it again just focuses it.
         if (item.Game.Source == "Steam" && OpenSteamUrl($"steam://rungameid/{item.Game.Id}")) return;

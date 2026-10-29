@@ -74,6 +74,12 @@ public sealed class AppSettings
     /// <summary>Games the user starred, as "Source:Id".</summary>
     public List<string> Favorites { get; set; } = new();
 
+    /// <summary>Names of the Start menu apps the Apps tab shows (matched by the start of the name, ignoring case and accents).</summary>
+    public List<string> AppsShown { get; set; } = new()
+    {
+        "AMD Software Adrenalin", "Configurações", "Discord", "Explorador de Arquivos", "Fotos", "Microsoft Edge", "Microsoft Store",
+    };
+
     /// <summary>Per-game name/cover/background chosen by the user, keyed by "Source:Id".</summary>
     public Dictionary<string, GameOverride> GameOverrides { get; set; } = new();
 
@@ -110,6 +116,7 @@ public sealed class AppSettings
         ManualGames = (ManualGames ?? new())
             .Where(g => g is not null && !string.IsNullOrWhiteSpace(g.Id) && !string.IsNullOrWhiteSpace(g.ExePath))
             .GroupBy(g => g.Id, StringComparer.Ordinal).Select(g => g.First()).ToList();
+        AppsShown = (AppsShown ?? new()).Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         Favorites = (Favorites ?? new()).Where(k => !string.IsNullOrWhiteSpace(k)).Distinct(StringComparer.Ordinal).ToList();
         foreach (var key in GameOverrides.Where(p => p.Value is null || p.Value.IsEmpty).Select(p => p.Key).ToList())
             GameOverrides.Remove(key);

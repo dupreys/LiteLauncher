@@ -252,6 +252,11 @@ public partial class MainWindow
                 ("Added", manual.Count.ToString(CultureInfo.InvariantCulture)),
                 ("With a missing .exe", manual.Count(g => !File.Exists(g.ExePath)).ToString(CultureInfo.InvariantCulture)),
             }),
+            ("Apps tab", new (string, string)[]
+            {
+                ("Apps shown", _apps.Count.ToString(CultureInfo.InvariantCulture)),
+                ("Icons", AppIcons.Report),
+            }),
             ("Data", new (string, string)[]
             {
                 ("Settings file", $"{SettingsStore.DefaultFilePath} ({SettingsSize()} bytes)"),

@@ -1,10 +1,7 @@
-## LiteLauncher 1.0.0
+## LiteLauncher 1.1.0
 
-Primeira versão estável.
-
-- **Biblioteca** com Steam, Epic Games e jogos manuais, abas, favoritos, ordenação e busca
-- **Steam: jogos não instalados** na aba Steam e **download pelo launcher**, com ícone na barra superior e tela de downloads
-- **Arte automática** da Epic e de jogos manuais pelo SteamGridDB
-- **Papel de parede**: fundos prontos ou uma imagem sua; opção de preto OLED
-- **Tempo de jogo e histórico**, **backup e restauração** das configurações e tela de **diagnóstico**
-- Navegação por controle, teclado e mouse; idiomas English, Português (Brasil) e Español
+- **Aba Apps** na biblioteca: abre aplicativos do PC do menu Iniciar (AMD Software Adrenalin, Configurações, Discord, Explorador de Arquivos, Fotos, Microsoft Edge e Microsoft Store por padrão; a lista pode ser editada no `settings.json`) em ícones quadrados de alta qualidade; `Start` abre o menu do app para trocar nome e imagem
+- **Som do jogo**: ao voltar ao overlay ou à tela inicial com um jogo aberto, o áudio dele é silenciado na hora e volta quando você retorna ao jogo
+- **Teclado**: o Y na busca abre apenas a entrada de texto do Windows (antes abria também o teclado virtual clássico)
+- Downloads da Steam: progresso mais próximo do mostrado pela Steam; só aparecem os jogos que estão realmente sendo baixados
+- Correção: as setas do controle não travam mais ao trocar para a aba Steam, que agora abre sem pausa

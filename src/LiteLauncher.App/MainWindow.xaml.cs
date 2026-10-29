@@ -65,6 +65,7 @@ public partial class MainWindow : Window
         _view.Filter = o => o is GameItem g && MatchesFilter(g) && MatchesSearch(g);
         GameGrid.ItemsSource = _view;
         InitNotInstalled();
+        InitApps();
 
         _gamepad.ButtonPressed += OnGamepad;
         _gamepad.ComboHeld += OnGamepadCombo;
@@ -178,6 +179,7 @@ public partial class MainWindow : Window
                     games[i] = WithCachedArt(PlayTracker.Apply(GameOverrides.Apply(games[i], App.Settings.GameOverrides), App.Settings.PlayRecords));
 
                 ApplyGames(games);
+                RebuildApps();
                 _ = DownloadMissingArtAsync(games);
             }
             while (_refreshAgain);
@@ -414,11 +416,24 @@ public partial class MainWindow : Window
         if (_view is null) return; // can fire during InitializeComponent
         _view.Refresh();
         _ownedView.Refresh();
+        _appsView.Refresh();
         UpdateCount();
     }
 
     private void UpdateCount()
     {
+        if (_filter == LibraryFilter.Apps)
+        {
+            var query0 = SearchBox.Text.Trim();
+            var shownApps = _appsView.Cast<object>().Count();
+            CountText.Text = query0.Length > 0 ? Loc.F("{0} of {1} apps", shownApps, _apps.Count) : Loc.F("{0} apps", _apps.Count);
+            NoResultsText.Visibility = shownApps == 0 ? Visibility.Visible : Visibility.Collapsed;
+            NoResultsText.Text = query0.Length > 0
+                ? Loc.F("No app here matches \"{0}\".", query0)
+                : _appsLoading || _apps.Count == 0 ? Loc.T("Loading apps…") : Loc.T("No apps found.");
+            return;
+        }
+
         var shownInstalled = _view.Cast<object>().Count();
         var shownOwned = _filter == LibraryFilter.Steam ? _ownedView.Cast<object>().Count() : 0;
         var shown = shownInstalled + shownOwned;
@@ -491,7 +506,8 @@ public partial class MainWindow : Window
 
     private void LaunchGame(GameItem item)
     {
-        if (item.Game.NotInstalled) OpenGameDetails(item); // nothing to start: the menu offers the download
+        if (IsApp(item)) OpenApp(item);
+        else if (item.Game.NotInstalled) OpenGameDetails(item); // nothing to start: the menu offers the download
         else ShowLaunchOverlay(item);
     }
 

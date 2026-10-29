@@ -64,6 +64,12 @@ public partial class MainWindow
 
     private void UpdateDetailsPlayButton(GameItem item)
     {
+        if (IsApp(item))
+        {
+            DetailsPlayLabel.Text = Loc.T("▶  Open");
+            return;
+        }
+
         if (!item.Game.NotInstalled)
         {
             DetailsPlayLabel.Text = Loc.T("▶  Play");

@@ -13,7 +13,7 @@ namespace LiteLauncher.App;
 // "My games & apps": filter tabs (Installed / Steam / Epic / Favourites) switched with LB and RB, and favourites (X).
 public partial class MainWindow
 {
-    private enum LibraryFilter { Installed, Recent, Steam, Epic, Favorites }
+    private enum LibraryFilter { Installed, Recent, Steam, Epic, Favorites, Apps }
 
     private enum LibrarySort { Recent, Name, Size }
 
@@ -26,6 +26,7 @@ public partial class MainWindow
         (LibraryFilter.Steam, "Steam"),
         (LibraryFilter.Epic, "Epic Games"),
         (LibraryFilter.Favorites, "★ Favourites"),
+        (LibraryFilter.Apps, "Apps"),
     };
 
     private LibraryFilter _filter = LibraryFilter.Installed;
@@ -36,6 +37,7 @@ public partial class MainWindow
         LibraryFilter.Steam => item.Game.Source == SteamProvider.ProviderName,
         LibraryFilter.Epic => item.Game.Source == EpicProvider.ProviderName,
         LibraryFilter.Favorites => item.IsFavorite,
+        LibraryFilter.Apps => false, // apps live in their own list
         _ => true,
     };
 
@@ -160,15 +162,16 @@ public partial class MainWindow
     private void SetFilter(LibraryFilter filter)
     {
         if (filter == _filter) return;
-        var wasSteam = _filter == LibraryFilter.Steam;
         var hadCard = GameFromElement(Keyboard.FocusedElement) is not null;
+        var before = GridSourceFor(_filter);
         _filter = filter;
-        if (wasSteam != (filter == LibraryFilter.Steam))
-            GameGrid.ItemsSource = filter == LibraryFilter.Steam ? _steamTab : _view; // Steam: installed first, then the games not installed
+        var after = GridSourceFor(filter);
+        if (!ReferenceEquals(before, after)) GameGrid.ItemsSource = after; // Steam: installed first, then the games not installed
         StyleFilterChips();
         App.Sounds.Play(SoundKind.Move);
         RefreshLibraryView();
         if (filter == LibraryFilter.Steam) OnSteamTabOpened();
+        if (filter == LibraryFilter.Apps) OnAppsTabOpened();
 
         // The grid's items were swapped: put the focus on a card that really exists, once the new cards are built.
         if (hadCard)
@@ -180,6 +183,13 @@ public partial class MainWindow
                 FocusFirstResult();
             }));
     }
+
+    private System.Collections.IEnumerable GridSourceFor(LibraryFilter filter) => filter switch
+    {
+        LibraryFilter.Steam => _steamTab,
+        LibraryFilter.Apps => _appsView,
+        _ => _view,
+    };
 
     private void CycleFilter(int step)
     {
@@ -193,6 +203,7 @@ public partial class MainWindow
         var hadCard = GameFromElement(Keyboard.FocusedElement) is not null;
         _view.Refresh();
         _ownedView.Refresh();
+        _appsView.Refresh();
         UpdateCount();
         if (hadCard || Keyboard.FocusedElement is null or Window) FocusFirstResult();
     }
@@ -212,7 +223,7 @@ public partial class MainWindow
             case GamepadButton.RightTrigger when LibraryInputAllowed():
                 CycleSort();
                 return true;
-            case GamepadButton.X when ActiveModal() is null && GameFromElement(Keyboard.FocusedElement) is { } item:
+            case GamepadButton.X when ActiveModal() is null && GameFromElement(Keyboard.FocusedElement) is { } item && !IsApp(item):
                 ToggleFavorite(item);
                 return true;
             default:
@@ -236,7 +247,7 @@ public partial class MainWindow
                 CycleSort();
                 return true;
             case Key.F when Keyboard.Modifiers == ModifierKeys.None && ActiveModal() is null
-                            && GameFromElement(Keyboard.FocusedElement) is { } item:
+                            && GameFromElement(Keyboard.FocusedElement) is { } item && !IsApp(item):
                 ToggleFavorite(item);
                 return true;
             default:

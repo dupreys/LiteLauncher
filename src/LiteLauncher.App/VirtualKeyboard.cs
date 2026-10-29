@@ -6,8 +6,7 @@ using System.Runtime.InteropServices;
 namespace LiteLauncher.App;
 
 /// <summary>
-/// Shows and hides the Windows on-screen keyboard. The touch keyboard (TabTip) is tried first because it is the
-/// one built into the system and works with a controller on Windows 11; the classic osk.exe is the fallback.
+/// Shows and hides the Windows text input panel (touch keyboard, TabTip), which works with a controller on Windows 11.
 /// Neither takes keyboard focus away from the launcher's text box, so typed characters land where expected.
 /// </summary>
 internal static class VirtualKeyboard
@@ -34,25 +33,14 @@ internal static class VirtualKeyboard
 
         try
         {
+            // Only the Windows text input panel (touch keyboard) is used. The classic on-screen keyboard (osk.exe) is
+            // never started: the panel's window is not always recognised, and a fallback would open both keyboards.
             if (File.Exists(TabTipPath))
             {
                 Process.Start(new ProcessStartInfo(TabTipPath) { UseShellExecute = true });
-                await Task.Delay(600); // the touch keyboard needs a moment to appear
-
-                if (generation != _generation) { Close(); return; } // closed while it was still starting
-                if (IsWindowShown(TouchKeyboardClass)) return;
-
-                // Windows 11's text input panel (the controller-friendly keyboard) is asked for directly.
-                if (ToggleTextInputPanel())
-                {
-                    await Task.Delay(500);
-                    if (generation != _generation) { Close(); return; }
-                    if (IsWindowShown(TouchKeyboardClass)) return;
-                }
+                await Task.Delay(300);
+                if (generation != _generation) Close(); // closed while it was still starting
             }
-
-            if (generation != _generation) return;
-            Process.Start(new ProcessStartInfo("osk.exe") { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
         {
@@ -79,45 +67,8 @@ internal static class VirtualKeyboard
         if (window != IntPtr.Zero) PostMessage(window, WmSysCommand, ScClose, IntPtr.Zero);
     }
 
-    private static bool IsWindowShown(string windowClass)
-    {
-        var window = FindWindow(windowClass, null);
-        return window != IntPtr.Zero && IsWindowVisible(window);
-    }
-
-    [ComImport, Guid("37c994e7-432b-4834-a2f7-dce1f13b834b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface ITipInvocation
-    {
-        void Toggle(IntPtr window);
-    }
-
-    private static readonly Guid TipInvocationClass = new("4ce576fa-83dc-4f88-951c-9d0782b4e376");
-
-    private static bool ToggleTextInputPanel()
-    {
-        try
-        {
-            if (Type.GetTypeFromCLSID(TipInvocationClass) is not { } type) return false;
-            var tip = (ITipInvocation)Activator.CreateInstance(type)!;
-            tip.Toggle(GetDesktopWindow());
-            Marshal.ReleaseComObject(tip);
-            return true;
-        }
-        catch (Exception ex) when (ex is COMException or InvalidCastException or InvalidOperationException or Win32Exception)
-        {
-            return false;
-        }
-    }
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr GetDesktopWindow();
-
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr FindWindow(string? className, string? windowName);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool IsWindowVisible(IntPtr window);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

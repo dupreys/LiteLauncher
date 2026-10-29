@@ -26,7 +26,8 @@ public partial class MainWindow
     private GameItem? DetailsItem() =>
         _detailsKey is null ? null
             : _items.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey)
-              ?? _owned.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey);
+              ?? _owned.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey)
+              ?? _apps.FirstOrDefault(i => GameSorter.Key(i.Game) == _detailsKey);
 
     private void OpenGameDetails(GameItem item)
     {
@@ -42,7 +43,7 @@ public partial class MainWindow
         DetailsTitle.Visibility = Visibility.Visible;
         DetailsManageLabel.Text = Loc.T("Manage   ▾");
         var manual = item.Game.Source == LiteLauncher.Core.Manual.ManualProvider.ProviderName;
-        DetailsStoreButton.Visibility = manual ? Visibility.Collapsed : Visibility.Visible;
+        DetailsStoreButton.Visibility = manual || IsApp(item) ? Visibility.Collapsed : Visibility.Visible;
         RemoveGameButton.Visibility = manual ? Visibility.Visible : Visibility.Collapsed;
         FillDetails(item);
         GameDetails.Visibility = Visibility.Visible;
@@ -99,6 +100,11 @@ public partial class MainWindow
                 : Loc.F("Installed from the {0} store. Use \"More about the game\" to open its store page.", game.Source);
         DetailsPlaytime.Text = "—";
         _ = LoadAchievementsAsync(game, key, cts.Token); // independent of the store info: shows up when it arrives
+        if (game.Source == LiteLauncher.Core.Apps.StartApps.SourceName)
+        {
+            DetailsDescription.Text = Loc.T("A Windows app. Use Manage to change its name, cover and background.");
+            return; // nothing to look up in a store
+        }
 
         var details = await GameInfo.FetchAsync(Http, game, _steamPath, App.Settings.SteamId, cts.Token);
         if (cts.IsCancellationRequested || _detailsKey != key) return;
@@ -162,6 +168,12 @@ public partial class MainWindow
     private void OnDetailsPlayClick(object sender, RoutedEventArgs e)
     {
         if (DetailsItem() is not { } item) return;
+        if (IsApp(item))
+        {
+            CloseGameDetails();
+            OpenApp(item);
+            return;
+        }
         if (item.Game.NotInstalled)
         {
             OnDownloadButton(item);

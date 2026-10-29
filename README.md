@@ -18,6 +18,10 @@ Inspirado em [GamingConsoleMode](https://github.com/toonymak1993/GamingConsoleMo
 
 Esta é a versão **1.0.0**. O número que aparece em Configurações → Geral vem da tag do release (por exemplo, `v1.0.0`).
 
+<p align="center"><img src="docs/screenshots/downloads.png" alt="Downloads" width="900"><br><sub>Downloads: progresso dos jogos da Steam baixados pelo launcher</sub></p>
+
+<p align="center"><img src="docs/screenshots/temas-papeis-de-parede.png" alt="Temas de papel de parede" width="900"><br><sub>Papéis de parede prontos: Aurora, Sunset, Ocean, Nebula, Ember, Forest, Graphite e Rose (prévia desenhada a partir das mesmas cores do launcher)</sub></p>
+
 ## Instalação
 
 1. Abra a página de [**Releases**](../../releases) do projeto.
@@ -52,7 +56,8 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 
 **Biblioteca ("My games & apps")**
 - Lê os jogos instalados de **todas** as pastas de biblioteca da Steam e os jogos instalados da Epic
-- Abas **Installed / Recent / Steam / Epic Games / Favourites**: `LB` e `RB` no controle (`PageUp` e `PageDown` no teclado) trocam de aba. *Recent* mostra só o que você já jogou
+- Abas **Installed / Recent / Steam / Epic Games / Favourites / Apps**: `LB` e `RB` no controle (`PageUp` e `PageDown` no teclado) trocam de aba. *Recent* mostra só o que você já jogou
+- **Aba Apps**: mostra uma lista curta de aplicativos do PC (os mesmos do menu Iniciar) como ícones quadrados, usando o maior ícone que o Windows fornece. Por padrão: AMD Software Adrenalin, Configurações, Discord, Explorador de Arquivos, Fotos, Microsoft Edge e Microsoft Store. Para mudar a lista, edite `AppsShown` no `settings.json` (nomes como aparecem no menu Iniciar; vale o começo do nome, sem diferenciar maiúsculas nem acentos). `A` abre o app e a busca funciona nela. `Start` abre o menu do app, onde *Gerenciar* troca nome e imagem (inclusive pela busca no SteamGridDB). Apps não são jogos: não entram em Recentes nem Favoritos
 - **Ordenação**: `RT` no controle (ou `F2`, ou um clique no botão *Sort*) alterna entre Recentes, A–Z e Tamanho em disco; a escolha fica salva
 - **Favoritos**: `X` no controle (ou `F`) marca ou desmarca o jogo
 - **Papel de parede**: em Configurações → Tema, escolha um fundo fixo entre vários prontos (Aurora, Pôr do sol, Oceano, Nebulosa…) ou use uma imagem sua, no lugar da arte do jogo. Biblioteca, Configurações, detalhes do jogo e a tela de jogo aberto usam fundo sólido (preto com a cor de fundo desligada, ou a cor escolhida)
@@ -69,6 +74,7 @@ Isso ainda não foi testado por nós com o LiteLauncher. Detalhes, limitações 
 **Tela de abertura do jogo (overlay)**
 - Cartão com a capa e contagem de 3 segundos; `B` ou `Esc` cancela
 - Durante o jogo ele vira a tela **Jogando agora**: tempo da sessão, botão **Back to game** (traz a janela do jogo para a frente) e o fechamento forçado. Quando você fecha o jogo, o LiteLauncher volta à frente na tela inicial. O botão **Home** (ou `B`) esconde o overlay e deixa um atalho com o nome do jogo na barra superior: `Seta para cima` até ele e `A` trazem o overlay de volta. Assim você usa o launcher (e, no futuro, outros apps) com o jogo aberto
+- **Som do jogo**: enquanto o overlay ou a tela inicial estão na frente, só o áudio do jogo é silenciado (o volume do Windows não muda). Ao voltar para o jogo, o som volta ao normal
 - **Fechamento forçado**: botão *Force close game* (aperte duas vezes para confirmar). Encerra os processos da pasta do jogo e volta ao início, útil quando o jogo trava ou não abre. Com o jogo em tela cheia, segure **Select + Start** por 1,5 s para trazer o launcher de volta. Jogos com anti-cheat podem recusar o encerramento; nesse caso use o Gerenciador de Tarefas
 
 **Menu do jogo** (`Start` no controle, tecla Menu ou botão direito)

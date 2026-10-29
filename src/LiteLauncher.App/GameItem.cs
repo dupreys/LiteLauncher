@@ -40,6 +40,11 @@ public sealed class GameItem : INotifyPropertyChanged
 
     public bool NotInstalled => Game.NotInstalled;
 
+    /// <summary>Start menu apps are shown as square icon tiles, without a caption.</summary>
+    public bool IsAppTile => Game.Source == "Apps";
+
+    public Visibility CaptionVisibility => IsAppTile ? Visibility.Collapsed : Visibility.Visible;
+
     public double TileOpacity => Game.NotInstalled ? 0.7 : 1.0;
 
     public Visibility InstallBadgeVisibility => Game.NotInstalled ? Visibility.Visible : Visibility.Collapsed;
@@ -52,6 +57,13 @@ public sealed class GameItem : INotifyPropertyChanged
     {
         get => _cover;
         private set { _cover = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Cover))); }
+    }
+
+    /// <summary>Sets the picture directly (used for app icons, which Windows draws for us).</summary>
+    public void SetCover(ImageSource cover)
+    {
+        _coverRequested = true;
+        Cover = cover;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

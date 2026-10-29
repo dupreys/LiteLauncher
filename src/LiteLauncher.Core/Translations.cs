@@ -381,6 +381,16 @@ public static class Translations
         ["Up / Down to scroll"] = "Cima / Baixo para rolar",
         ["PLAY TIME"] = "TEMPO DE JOGO",
         ["Play time and history"] = "Tempo de jogo e histórico",
+        ["Apps"] = "Apps",
+        ["{0} apps"] = "{0} apps",
+        ["{0} of {1} apps"] = "{0} de {1} apps",
+        ["No app here matches \"{0}\"."] = "Nenhum app corresponde a \"{0}\".",
+        ["Loading apps…"] = "Carregando apps…",
+        ["No apps found."] = "Nenhum app encontrado.",
+        ["Opening {0}…"] = "Abrindo {0}…",
+        ["Could not open {0}"] = "Não foi possível abrir {0}",
+        ["▶  Open"] = "▶  Abrir",
+        ["A Windows app. Use Manage to change its name, cover and background."] = "Um app do Windows. Use Gerenciar para mudar o nome, a capa e o fundo.",
     };
 
     public static readonly IReadOnlyDictionary<string, string> Spanish = new Dictionary<string, string>
@@ -761,6 +771,16 @@ public static class Translations
         ["Up / Down to scroll"] = "Arriba / Abajo para desplazar",
         ["PLAY TIME"] = "TIEMPO DE JUEGO",
         ["Play time and history"] = "Tiempo de juego e historial",
+        ["Apps"] = "Aplicaciones",
+        ["{0} apps"] = "{0} aplicaciones",
+        ["{0} of {1} apps"] = "{0} de {1} aplicaciones",
+        ["No app here matches \"{0}\"."] = "Ninguna aplicación coincide con \"{0}\".",
+        ["Loading apps…"] = "Cargando aplicaciones…",
+        ["No apps found."] = "No se encontraron aplicaciones.",
+        ["Opening {0}…"] = "Abriendo {0}…",
+        ["Could not open {0}"] = "No se pudo abrir {0}",
+        ["▶  Open"] = "▶  Abrir",
+        ["A Windows app. Use Manage to change its name, cover and background."] = "Una aplicación de Windows. Usa Administrar para cambiar su nombre, portada y fondo.",
     };
 
 }

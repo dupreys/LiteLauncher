@@ -42,6 +42,43 @@ internal static class GameProcessKiller
         return killed;
     }
 
+    /// <summary>Ids of the running processes that belong to the game (programs inside its install folder).</summary>
+    public static HashSet<uint> GamePids(Game game)
+    {
+        var ids = new HashSet<uint>();
+        var folder = ProcessScope.Resolve(game);
+        if (folder is null) return ids;
+
+        var self = Environment.ProcessId;
+        foreach (var process in Process.GetProcesses())
+        {
+            try
+            {
+                if (process.Id == self) continue;
+                var image = ImagePath(process.Id);
+                if (image is not null && ProcessScope.IsInside(folder, image)) ids.Add((uint)process.Id);
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or NotSupportedException)
+            {
+                // gone already, or not ours to look at
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        }
+        return ids;
+    }
+
+    /// <summary>Id of the process that owns the window in front right now (0 when unknown).</summary>
+    public static uint ForegroundProcessId()
+    {
+        var window = GetForegroundWindow();
+        if (window == IntPtr.Zero) return 0;
+        GetWindowThreadProcessId(window, out var pid);
+        return pid;
+    }
+
     /// <summary>Brings the running game's window to the front. False when no window of the game was found.</summary>
     public static bool BringToFront(Game game)
     {
@@ -100,6 +137,12 @@ internal static class GameProcessKiller
     [DllImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(IntPtr handle);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

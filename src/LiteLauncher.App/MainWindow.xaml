@@ -45,6 +45,11 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAppTile}" Value="True">
+                    <Setter Property="Height" Value="166"/>
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Cover only (small home tiles) -->
@@ -98,7 +103,7 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <Border VerticalAlignment="Bottom" Padding="12,22,12,10">
+                <Border VerticalAlignment="Bottom" Padding="12,22,12,10" Visibility="{Binding CaptionVisibility}">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                             <GradientStop Color="#00000000" Offset="0"/>
