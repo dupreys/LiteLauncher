@@ -68,6 +68,29 @@
 
     <!-- Text button used for settings actions -->
     <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource Tile}">
+        <!-- No zoom on focus here: in the settings lists a zoomed button sticks out of its column and is cut by the scroll area.
+             The accent frame (3 px, always reserved) is the only focus mark. -->
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Frame" Background="{DynamicResource Surface}"
+                            BorderBrush="Transparent" BorderThickness="3" CornerRadius="3" SnapsToDevicePixels="True">
+                        <ContentPresenter Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource Accent}"/>
+                            <Setter Property="Panel.ZIndex" Value="2"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Setter Property="Padding" Value="20,12"/>
         <Setter Property="HorizontalAlignment" Value="Left"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>

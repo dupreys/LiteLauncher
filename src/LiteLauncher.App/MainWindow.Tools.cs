@@ -310,16 +310,38 @@ public partial class MainWindow
 
     private static string VersionNumber(Version v) => $"{Math.Max(v.Major, 0)}.{Math.Max(v.Minor, 0)}.{Math.Max(v.Build, 0)}";
 
+    /// <summary>The notes written for this version, read from the copy inside the app (no network needed).</summary>
+    private static ReleaseNotesInfo? EmbeddedReleaseNotes()
+    {
+        try
+        {
+            using var stream = typeof(MainWindow).Assembly.GetManifestResourceStream("RELEASE_NOTES.md");
+            if (stream is null) return null;
+            using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+            var body = ReleaseNotes.ToPlainText(reader.ReadToEnd());
+            // The first line is the file's own title ("LiteLauncher 1.1.0"): the screen already shows the version.
+            var firstBreak = body.IndexOf('\n');
+            if (firstBreak > 0 && body[..firstBreak].StartsWith("LiteLauncher", StringComparison.OrdinalIgnoreCase)) body = body[firstBreak..].Trim();
+            if (body.Length == 0) return null;
+
+            var number = VersionNumber(AppInfo.Current);
+            var page = string.IsNullOrEmpty(AppInfo.Repository) ? "" : $"https://github.com/{AppInfo.Repository}/releases/tag/v{number}";
+            return new ReleaseNotesInfo("v" + number, Loc.T("What's new"), body, page);
+        }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException)
+        {
+            return null;
+        }
+    }
+
     private async void OnWhatsNewClick(object sender, RoutedEventArgs e)
     {
-        if (string.IsNullOrEmpty(AppInfo.Repository) || AppInfo.Current <= new Version(0, 0, 0))
+        var notes = EmbeddedReleaseNotes();
+        if (notes is null && !string.IsNullOrEmpty(AppInfo.Repository) && AppInfo.Current > new Version(0, 0, 0))
         {
-            ShowToast("Release notes only exist for installed releases, not development builds.");
-            return;
+            ShowToast("Loading the release notes…");
+            notes = await ReleaseNotes.FetchAsync(Http, AppInfo.Repository, AppInfo.Current);
         }
-
-        ShowToast("Loading the release notes…");
-        var notes = await ReleaseNotes.FetchAsync(Http, AppInfo.Repository, AppInfo.Current);
         if (notes is null)
         {
             ShowToast("The release notes are not available right now (offline, or this version has none).");
@@ -330,7 +352,7 @@ public partial class MainWindow
 
     private void ShowReleaseNotes(ReleaseNotesInfo notes) =>
         ShowInfo(Loc.T("WHAT'S NEW"), notes.Title, $"LiteLauncher {notes.Tag}", notes.Body, monospace: false,
-                 (Loc.T("Open on GitHub"), () => OpenReleasePage(notes.PageUrl)));
+                 string.IsNullOrEmpty(notes.PageUrl) ? null : (Loc.T("Open on GitHub"), () => OpenReleasePage(notes.PageUrl)));
 
     private void OpenReleasePage(string url)
     {
@@ -342,7 +364,7 @@ public partial class MainWindow
     private async Task MaybeShowReleaseNotesAsync()
     {
         var current = AppInfo.Current;
-        if (current <= new Version(0, 0, 0) || string.IsNullOrEmpty(AppInfo.Repository)) return;
+        if (current <= new Version(0, 0, 0)) return;
 
         var number = VersionNumber(current);
         if (App.Settings.LastSeenVersion == number) return;
@@ -354,8 +376,9 @@ public partial class MainWindow
         }
 
         await Task.Delay(TimeSpan.FromSeconds(6)); // let the home screen settle first
-        var notes = await ReleaseNotes.FetchAsync(Http, AppInfo.Repository, current);
-        if (notes is null) return; // offline: try again next start
+        var notes = EmbeddedReleaseNotes();
+        if (notes is null && !string.IsNullOrEmpty(AppInfo.Repository)) notes = await ReleaseNotes.FetchAsync(Http, AppInfo.Repository, current);
+        if (notes is null) return; // nothing to show (or offline): try again next start
 
         if (ActiveModal() is not null || _current != AppView.Home) return; // busy right now: next start
         App.Settings.LastSeenVersion = number;

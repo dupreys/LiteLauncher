@@ -34,6 +34,11 @@ public static class Translations
         ["Sort"] = "Ordem",
         ["Filter"] = "Filtro",
         ["Searching SteamGridDB…"] = "Buscando no SteamGridDB…",
+        ["16:9 Backgrounds"] = "Fundos 16:9",
+        ["Searching Wallhaven…"] = "Buscando no Wallhaven…",
+        ["No 16:9 wallpapers found on Wallhaven for this game."] = "Nenhum papel de parede 16:9 encontrado no Wallhaven para este jogo.",
+        ["{0} wallpapers from Wallhaven (16:9) · pick one to use it as the background"] = "{0} papéis de parede do Wallhaven (16:9) · escolha um para usar como fundo",
+        ["Could not reach Wallhaven. Check your internet connection."] = "Não foi possível acessar o Wallhaven. Verifique sua conexão com a internet.",
         ["This game was not found on SteamGridDB."] = "Este jogo não foi encontrado no SteamGridDB.",
         ["SteamGridDB rejected the API key. Check it in Settings → Integrations."] = "O SteamGridDB recusou a chave de API. Confira em Configurações → Integrações.",
         ["Could not reach SteamGridDB. Check your internet connection."] = "Não foi possível acessar o SteamGridDB. Verifique sua internet.",
@@ -391,6 +396,8 @@ public static class Translations
         ["Could not open {0}"] = "Não foi possível abrir {0}",
         ["▶  Open"] = "▶  Abrir",
         ["A Windows app. Use Manage to change its name, cover and background."] = "Um app do Windows. Use Gerenciar para mudar o nome, a capa e o fundo.",
+        ["What's new"] = "Novidades",
+        ["These keys are free. They are saved only on this PC (settings.json) and sent only to Steam and SteamGridDB. The friends list also needs you to be signed in with Steam."] = "Estas chaves são gratuitas. Ficam salvas só neste PC (settings.json) e são enviadas apenas à Steam e ao SteamGridDB. A lista de amigos também exige entrar com a Steam.",
     };
 
     public static readonly IReadOnlyDictionary<string, string> Spanish = new Dictionary<string, string>
@@ -424,6 +431,11 @@ public static class Translations
         ["Sort"] = "Orden",
         ["Filter"] = "Filtro",
         ["Searching SteamGridDB…"] = "Buscando en SteamGridDB…",
+        ["16:9 Backgrounds"] = "Fondos 16:9",
+        ["Searching Wallhaven…"] = "Buscando en Wallhaven…",
+        ["No 16:9 wallpapers found on Wallhaven for this game."] = "No se encontraron fondos 16:9 en Wallhaven para este juego.",
+        ["{0} wallpapers from Wallhaven (16:9) · pick one to use it as the background"] = "{0} fondos de Wallhaven (16:9) · elige uno para usarlo como fondo",
+        ["Could not reach Wallhaven. Check your internet connection."] = "No se pudo acceder a Wallhaven. Comprueba tu conexión a Internet.",
         ["This game was not found on SteamGridDB."] = "Este juego no se encontró en SteamGridDB.",
         ["SteamGridDB rejected the API key. Check it in Settings → Integrations."] = "SteamGridDB rechazó la clave de API. Revísala en Ajustes → Integraciones.",
         ["Could not reach SteamGridDB. Check your internet connection."] = "No se pudo acceder a SteamGridDB. Revisa tu conexión a internet.",
@@ -781,6 +793,8 @@ public static class Translations
         ["Could not open {0}"] = "No se pudo abrir {0}",
         ["▶  Open"] = "▶  Abrir",
         ["A Windows app. Use Manage to change its name, cover and background."] = "Una aplicación de Windows. Usa Administrar para cambiar su nombre, portada y fondo.",
+        ["What's new"] = "Novedades",
+        ["These keys are free. They are saved only on this PC (settings.json) and sent only to Steam and SteamGridDB. The friends list also needs you to be signed in with Steam."] = "Estas claves son gratuitas. Se guardan solo en este PC (settings.json) y se envían únicamente a Steam y SteamGridDB. La lista de amigos también requiere iniciar sesión con Steam.",
     };
 
 }

@@ -11,12 +11,17 @@
     <ApplicationIcon>Assets\LiteLauncher.ico</ApplicationIcon>
     <TieredPGO>true</TieredPGO>
     <!-- Local builds default to 1.0.0; the release workflow passes -p:Version=<tag> and -p:GitHubRepo=<owner/name>. -->
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <GitHubRepo></GitHubRepo>
   </PropertyGroup>
 
   <ItemGroup>
     <AssemblyMetadata Include="GitHubRepo" Value="$(GitHubRepo)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The release notes travel inside the app, so "What's new" works offline and in local builds. -->
+    <EmbeddedResource Include="..\..\RELEASE_NOTES.md" LogicalName="RELEASE_NOTES.md" Condition="Exists('..\..\RELEASE_NOTES.md')" />
   </ItemGroup>
 
   <ItemGroup>

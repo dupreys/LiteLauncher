@@ -613,7 +613,7 @@
                                             Click="OnOpenLinkClick"><TextBlock Text="Get a key…"/></Button>
                                 </StackPanel>
                                 <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,20,0,0" Foreground="{DynamicResource TextMuted}"
-                                           Text="Both keys are free. They are saved only on this PC (settings.json) and sent only to Steam and SteamGridDB. The friends list also needs you to be signed in with Steam."/>
+                                           Text="These keys are free. They are saved only on this PC (settings.json) and sent only to Steam and SteamGridDB. The friends list also needs you to be signed in with Steam."/>
                             </StackPanel>
 
                             <StackPanel x:Name="PanelGeneral" Visibility="Collapsed">
@@ -1009,6 +1009,8 @@
                                                     Tag="Cover" Click="OnGridTabClick"><TextBlock Text="Covers"/></Button>
                                             <Button x:Name="GridTabBackground" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Margin="10,0,0,0" Tag="Background" Click="OnGridTabClick"><TextBlock Text="Backgrounds"/></Button>
+                                            <Button x:Name="GridTabWall" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="190"
+                                                    Margin="10,0,0,0" Tag="Wallhaven" Click="OnGridTabClick"><TextBlock Text="16:9 Backgrounds"/></Button>
                                             <Button x:Name="GridTabLogo" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"
                                                     Margin="10,0,0,0" Tag="Logo" Click="OnGridTabClick"><TextBlock Text="Logos"/></Button>
                                             <Button x:Name="GridTabShots" Style="{StaticResource XboxButton}" Height="52" Padding="20,6" Width="170"

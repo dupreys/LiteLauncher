@@ -33,6 +33,7 @@ public partial class MainWindow
     {
         if (sender is not FrameworkElement { Tag: string tag }) return;
         if (tag == "Screenshots") _ = LoadScreenshotsAsync();
+        else if (tag == "Wallhaven") _ = LoadWallhavenAsync();
         else if (Enum.TryParse<ArtKind>(tag, out var kind)) _ = LoadGridAsync(kind);
     }
 
@@ -64,6 +65,7 @@ public partial class MainWindow
         _gridKind = kind;
         foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = k == kind ? FontWeights.Bold : FontWeights.Normal;
         GridTabShots.FontWeight = FontWeights.Normal;
+        GridTabWall.FontWeight = FontWeights.Normal;
         GridResults.Children.Clear();
         GridStatus.Text = Loc.T("Searching SteamGridDB…");
         System.Windows.Input.Keyboard.Focus(TabFor(kind));
@@ -108,6 +110,7 @@ public partial class MainWindow
         _gridKind = ArtKind.Background;
         foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = FontWeights.Normal;
         GridTabShots.FontWeight = FontWeights.Bold;
+        GridTabWall.FontWeight = FontWeights.Normal;
         GridResults.Children.Clear();
         System.Windows.Input.Keyboard.Focus(GridTabShots);
 
@@ -126,6 +129,37 @@ public partial class MainWindow
             : Loc.F("{0} screenshots (16:9, fill the whole screen) · pick one to use it as the background", shots.Count);
 
         foreach (var shot in shots.Take(40)) GridResults.Children.Add(MakeArtButton(shot, ArtKind.Background, wide: true));
+    }
+
+    /// <summary>16:9 wallpapers from wallhaven.cc (no key), searched by the game's name. Applied as the game's background.</summary>
+    private async Task LoadWallhavenAsync()
+    {
+        if (DetailsItem() is not { } item) return;
+
+        _gridCts?.Cancel();
+        var cts = _gridCts = new CancellationTokenSource();
+        _gridKind = ArtKind.Background;
+        foreach (var k in Enum.GetValues<ArtKind>()) TabFor(k).FontWeight = FontWeights.Normal;
+        GridTabShots.FontWeight = FontWeights.Normal;
+        GridTabWall.FontWeight = FontWeights.Bold;
+        GridResults.Children.Clear();
+        GridStatus.Text = Loc.T("Searching Wallhaven…");
+        System.Windows.Input.Keyboard.Focus(GridTabWall);
+
+        try
+        {
+            var images = await Wallhaven.SearchAsync(Http, item.Game.OriginalName ?? item.Game.Name, cts.Token);
+            if (cts.IsCancellationRequested) return;
+            GridStatus.Text = images.Count == 0
+                ? Loc.T("No 16:9 wallpapers found on Wallhaven for this game.")
+                : Loc.F("{0} wallpapers from Wallhaven (16:9) · pick one to use it as the background", images.Count);
+
+            foreach (var image in images) GridResults.Children.Add(MakeArtButton(image, ArtKind.Background, wide: true));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            if (!cts.IsCancellationRequested) GridStatus.Text = Loc.T("Could not reach Wallhaven. Check your internet connection.");
+        }
     }
 
     private static string KindName(ArtKind kind) => kind switch

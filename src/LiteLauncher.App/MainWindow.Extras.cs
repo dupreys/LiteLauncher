@@ -125,8 +125,7 @@ public partial class MainWindow
     {
         var cover = game.CoverPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Cover)
                     ?? SteamGridDbArt.Cached(ArtCacheDir, game, StoreArtKind.Cover);
-        var hero = game.BackdropPath ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Backdrop)
-                   ?? SteamGridDbArt.Cached(ArtCacheDir, game, StoreArtKind.Backdrop);
+        var hero = game.BackdropPath ?? SteamGridDbArt.CachedWideHero(ArtCacheDir, game) ?? CoverDownloader.Cached(ArtCacheDir, game, StoreArtKind.Backdrop);
         return cover == game.CoverPath && hero == game.BackdropPath ? game : game with { CoverPath = cover, BackdropPath = hero };
     }
 
@@ -138,23 +137,36 @@ public partial class MainWindow
         var gridRejected = false;
         foreach (var game in games)
         {
-            // Epic and manually added games have no public art: SteamGridDB (with the user's own key) finds it by name.
-            if (SteamGridDbArt.Applies(game) && gridKey is not null && !gridRejected
-                && (game.CoverPath is null || game.BackdropPath is null))
+            // Epic and manually added games have no public art. Backgrounds: the Steam store screenshot first (16:9, no key), then Wallhaven (also no key). SteamGridDB (the user's own
+            // key) supplies only the covers.
+            if (SteamGridDbArt.Applies(game))
             {
-                if (!_artTried.Add(GameSorter.Key(game) + "#sgdb")) continue;
-                try
+                // 1st: the game's Steam screenshot (16:9, no key), when the game is also on Steam.
+                if (SteamGridDbArt.CachedSteamShot(ArtCacheDir, game) is null && _artTried.Add(GameSorter.Key(game) + "#shot")
+                    && await SteamGridDbArt.DownloadSteamShotAsync(Http, ArtCacheDir, game) is not null)
+                    fetched = true;
+
+                // 2nd: a 16:9 wallpaper from wallhaven.cc whose tags show it is this game (no key).
+                if (SteamGridDbArt.CachedWideHero(ArtCacheDir, game) is null && _artTried.Add(GameSorter.Key(game) + "#wall")
+                    && await SteamGridDbArt.DownloadWallhavenAsync(Http, ArtCacheDir, game) is not null)
+                    fetched = true;
+
+                // Covers only: SteamGridDB (the user's own key). Backgrounds never come from it.
+                if (gridKey is not null && !gridRejected && game.CoverPath is null
+                    && _artTried.Add(GameSorter.Key(game) + "#sgdb"))
                 {
-                    int? gridId = await SteamGridDb.FindGameIdAsync(Http, gridKey, game);
-                    if (gridId is not null)
+                    try
                     {
-                        if (game.CoverPath is null && await SteamGridDbArt.DownloadAsync(Http, gridKey, ArtCacheDir, game, StoreArtKind.Cover, gridId) is not null) fetched = true;
-                        if (game.BackdropPath is null && await SteamGridDbArt.DownloadAsync(Http, gridKey, ArtCacheDir, game, StoreArtKind.Backdrop, gridId) is not null) fetched = true;
+                        int? gridId = await SteamGridDb.FindGameIdAsync(Http, gridKey, game);
+                        if (gridId is not null)
+                        {
+                            if (game.CoverPath is null && await SteamGridDbArt.DownloadAsync(Http, gridKey, ArtCacheDir, game, StoreArtKind.Cover, gridId) is not null) fetched = true;
+                        }
                     }
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    gridRejected = true; // wrong key: no point asking again this time
+                    catch (UnauthorizedAccessException)
+                    {
+                        gridRejected = true; // wrong key: no point asking again this time
+                    }
                 }
                 continue;
             }
